@@ -653,10 +653,45 @@
     }
   }
 
+  /* ================= 数据更新提醒（版本轮询） ================= */
+  var VERSION_URL = 'data.version.json';
+  var VER_KEY = 'price_data_ver';
+  var refreshShown = false;
+  function getCurVersion() {
+    try { return parseInt(localStorage.getItem(VER_KEY) || '0', 10) || 0; } catch (e) { return 0; }
+  }
+  function initVersion() {
+    fetch(VERSION_URL + '?t=' + new Date().getTime()).then(function (r) { return r.json(); })
+      .then(function (d) {
+        var v = parseInt(d && d.v, 10);
+        if (v) { try { localStorage.setItem(VER_KEY, String(v)); } catch (e) {} }
+      }).catch(function () {});
+  }
+  function checkUpdate() {
+    fetch(VERSION_URL + '?t=' + new Date().getTime()).then(function (r) { return r.json(); })
+      .then(function (d) {
+        var v = parseInt(d && d.v, 10);
+        if (!v) return;
+        if (v > getCurVersion() && !refreshShown) {
+          refreshShown = true;
+          var m = $('refreshModal');
+          if (m) m.style.display = 'flex';
+        }
+      }).catch(function () {});
+  }
+  function bindRefreshModal() {
+    var c = $('refreshClose'); if (c) c.addEventListener('click', function () { $('refreshModal').style.display = 'none'; });
+    var n = $('refreshNow'); if (n) n.addEventListener('click', function () { location.reload(); });
+    var mask = $('refreshModal'); if (mask) mask.addEventListener('click', function (e) { if (e.target === mask) mask.style.display = 'none'; });
+  }
+
   /* ================= 启动 ================= */
   setupAll();
   bindStatic();
   recalc();
   fixSummaryTop();
   window.addEventListener('resize', fixSummaryTop);
+  initVersion();
+  bindRefreshModal();
+  setInterval(checkUpdate, 30000);
 })();
