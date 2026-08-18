@@ -263,9 +263,13 @@
       if (mv) { guide = mv.guide; cost = mv.cost; }
     }
     if (car && color) {
-      var cArr = D.colors[car] || [];
-      for (var i = 0; i < cArr.length; i++) {
-        if (cArr[i].name === color) { colorPremium = cArr[i].premium; break; }
+      if (D.globalColors && D.globalColors[color] !== undefined) {
+        colorPremium = D.globalColors[color];
+      } else {
+        var cArr = D.colors[car] || [];
+        for (var i = 0; i < cArr.length; i++) {
+          if (cArr[i].name === color) { colorPremium = cArr[i].premium; break; }
+        }
       }
     }
     guide = guide + colorPremium;
