@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>嘉兴方程豹 · 订单价格申请</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
@@ -13,11 +13,24 @@
   <div class="actions">
     <button class="btn" id="resetBtn">重置</button>
     <button class="btn" id="adminBtn">管理</button>
-    <button class="btn primary" id="printBtn">打印 / 导出报价单</button>
+    <button class="btn" id="imgBtn">导出图片</button>
+    <button class="btn primary" id="printBtn">打印</button>
   </div>
 </header>
 
 <main class="container">
+
+  <!-- 0. 汇总（置顶冻结） -->
+  <section class="card summary-card">
+    <div class="summary-grid">
+      <div class="summary-item"><div class="k">三级毛利</div><div class="v amount" id="sumTier3">-</div></div>
+      <div class="summary-item"><div class="k">毛利</div><div class="v amount" id="sumGross">-</div></div>
+      <div class="summary-item"><div class="k">整车毛利</div><div class="v amount" id="sumTotal">-</div></div>
+      <div class="summary-item"><div class="k">限价</div><div class="v amount" id="sumLimit">-</div></div>
+      <div class="summary-item"><div class="k">毛利达成</div><div class="v amount" id="sumAchieve">-</div></div>
+      <div class="summary-item" id="sumOver"><div class="k">是否超限价</div><div class="v" id="sumOverV">-</div></div>
+    </div>
+  </section>
 
   <!-- 1. 订单信息 -->
   <section class="card">
@@ -30,12 +43,12 @@
       <div class="field"><label>内饰</label><select id="interior"><option value="">请先选择车系</option></select></div>
       <div class="field"><label>订单名称</label><input id="orderName" type="text" placeholder="例：张三-豹5"></div>
       <div class="field"><label>订单时间</label><input id="orderDate" type="date"></div>
-      <div class="field"><label>客户来源</label><input id="customerSource" type="text" placeholder="例：抖音/展厅"></div>
-      <div class="field"><label>按揭</label><input id="mortgage" type="text" placeholder="例：是/否"></div>
+      <div class="field"><label>客户来源</label><select id="customerSource"><option value="">请选择</option></select></div>
+      <div class="field"><label>按揭</label><select id="mortgage"><option value="">请选择</option></select></div>
       <div class="field"><label>手机号码</label><input id="phone" type="text" placeholder="客户电话"></div>
       <div class="field"><label>交车时间</label><input id="delivery" type="date"></div>
       <div class="field"><label>销售顾问</label><input id="salesman" type="text" placeholder="姓名"></div>
-      <div class="field"><label>车辆来源</label><input id="vehicleSource" type="text" placeholder="例：厂家/调拨"></div>
+      <div class="field"><label>车辆来源</label><select id="vehicleSource"><option value="">请选择</option></select></div>
     </div>
   </section>
 
@@ -65,7 +78,6 @@
   <section class="card">
     <h2>三级毛利构成</h2>
 
-    <!-- 贷款 -->
     <div class="sub-block">
       <div class="sub-title">贷款 <span class="calc">毛利 = 返息金额 - 返佣</span>
         <button type="button" class="btn add" id="addLoanBtn">+ 添加贷款</button></div>
@@ -75,9 +87,8 @@
       <div id="loanRows"></div>
     </div>
 
-    <!-- 精品 -->
     <div class="sub-block">
-      <div class="sub-title">精品 <span class="calc">毛利 = 产值 - 成本（成本按车系+项目自动匹配）</span>
+      <div class="sub-title">精品 <span class="calc">毛利 = 产值 - 成本（成本自动匹配）</span>
         <button type="button" class="btn add" id="addJpBtn">+ 添加精品项目</button></div>
       <div class="dyn-head" style="grid-template-columns:1.4fr .9fr 1fr 1fr 34px">
         <span>项目</span><span>产值</span><span>成本(自动)</span><span>毛利</span><span></span>
@@ -85,7 +96,6 @@
       <div id="jingpinRows"></div>
     </div>
 
-    <!-- 选装 -->
     <div class="sub-block">
       <div class="sub-title">选装 <span class="calc">毛利 = 产值 - 成本</span>
         <button type="button" class="btn add" id="addOptBtn">+ 添加选装</button></div>
@@ -95,7 +105,6 @@
       <div id="optRows"></div>
     </div>
 
-    <!-- 保养 -->
     <div class="sub-block">
       <div class="sub-title">保养 <span class="calc">毛利 = 产值 - 单价成本 × 次数</span>
         <button type="button" class="btn add" id="addMtBtn">+ 添加保养</button></div>
@@ -105,7 +114,6 @@
       <div id="mtRows"></div>
     </div>
 
-    <!-- 卡券 -->
     <div class="sub-block">
       <div class="sub-title">卡券 <span class="calc">毛利 = 产值 - 成本</span>
         <button type="button" class="btn add" id="addCouponBtn">+ 添加卡券</button></div>
@@ -115,7 +123,6 @@
       <div id="couponRows"></div>
     </div>
 
-    <!-- 保险 -->
     <div class="sub-block">
       <div class="sub-title">保险 <span class="calc">毛利 = 预估返佣</span>
         <button type="button" class="btn add" id="addInsBtn">+ 添加保险</button></div>
@@ -125,7 +132,6 @@
       <div id="insRows"></div>
     </div>
 
-    <!-- 上牌 -->
     <div class="sub-block">
       <div class="sub-title">上牌 <span class="calc">毛利 = 收费 - 成本</span>
         <button type="button" class="btn add" id="addRegBtn">+ 添加上牌</button></div>
@@ -136,25 +142,20 @@
     </div>
   </section>
 
-  <!-- 4. 汇总 -->
-  <section class="card">
-    <h2>汇总</h2>
-    <div class="summary-grid">
-      <div class="summary-item"><div class="k">三级毛利</div><div class="v amount" id="sumTier3">-</div></div>
-      <div class="summary-item"><div class="k">毛利</div><div class="v amount" id="sumGross">-</div></div>
-      <div class="summary-item"><div class="k">整车毛利</div><div class="v amount" id="sumTotal">-</div></div>
-      <div class="summary-item"><div class="k">限价</div><div class="v amount" id="sumLimit">-</div></div>
-      <div class="summary-item"><div class="k">毛利达成</div><div class="v amount" id="sumAchieve">-</div></div>
-      <div class="summary-item" id="sumOver"><div class="k">是否超限价</div><div class="v" id="sumOverV">-</div></div>
-    </div>
-  </section>
-
 </main>
+
+<!-- 导出图片模板（固定宽度，手机/电脑一致） -->
+<div id="exportArea">
+  <div class="ex-title">嘉兴方程豹 · 订单价格申请单</div>
+  <div class="ex-sub" id="exDate"></div>
+  <table class="ex-table" id="exTable"></table>
+</div>
 
 <!-- 打印区域 -->
 <div id="printArea"></div>
 
-<script src="data.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="data.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
