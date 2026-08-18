@@ -534,3 +534,17 @@ body {
 @media (max-width: 640px) {
   .modal-body { padding: 10px; }
 }
+
+/* ===== 拖拽交换 ===== */
+.drag-handle {
+  cursor: grab;
+  color: #c0c6cf;
+  font-size: 15px;
+  user-select: none;
+  text-align: center;
+  line-height: 1;
+  align-self: center;
+}
+.drag-handle:hover { color: var(--primary); }
+.drag-src { opacity: .4; }
+.drag-over { outline: 2px dashed var(--primary); outline-offset: 2px; }
