@@ -311,7 +311,11 @@
       var val = num(r.querySelector('[data-role="jp-value"]'));
       var cst = 0;
       if (car && sel.value) {
-        (D.jingpin[car] || []).forEach(function (p) { if (p.name === sel.value) cst = p.buy; });
+        if (D.globalJps && D.globalJps[sel.value] !== undefined) {
+          cst = D.globalJps[sel.value];
+        } else {
+          (D.jingpin[car] || []).forEach(function (p) { if (p.name === sel.value) cst = p.buy; });
+        }
       }
       var p = val - cst;
       r.querySelector('[data-role="jp-cost"]').textContent = cst ? fmt(cst) : '-';
