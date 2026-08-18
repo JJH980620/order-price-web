@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>嘉兴方程豹 · 订单价格申请</title>
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 
@@ -186,7 +186,10 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="data.js?v=8"></script>
-<script src="app.js?v=8"></script>
+<script>
+  // data.js 每次加载带时间戳，绕过浏览器缓存，确保刷新即拿到最新数据
+  document.write('<script src="data.js?v=' + Date.now() + '"><\/script>');
+</script>
+<script src="app.js?v=9"></script>
 </body>
 </html>
