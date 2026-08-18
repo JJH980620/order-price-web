@@ -10,6 +10,11 @@
     if (n === null || n === undefined || isNaN(x)) return '-';
     return x.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   };
+  var fmtIn = function (el) {
+    var v = el && el.value;
+    if (v === null || v === undefined || String(v).trim() === '') return '-';
+    return fmt(v);
+  };
   var num = function (el) {
     var v = parseFloat(el.value);
     return isNaN(v) ? 0 : v;
@@ -369,92 +374,110 @@
     else { overEl.className = 'summary-item ok'; $('sumOverV').textContent = '未超限'; }
   }
 
-  /* ================= 打印 ================= */
-  function buildPrint() {
-    var h = '<h1 style="text-align:center;font-size:22px;margin:0 0 4px">嘉兴方程豹 · 订单价格申请单</h1>';
-    h += '<p style="text-align:center;color:#555;margin:0 0 18px">' + new Date().toLocaleDateString('zh-CN') + '</p>';
-    function row(k, v) {
-      return '<tr><td style="padding:7px 12px;border:1px solid #ccc;background:#f4f4f4;width:140px">' + k + '</td>' +
-        '<td style="padding:7px 12px;border:1px solid #ccc;text-align:right">' + v + '</td></tr>';
-    }
-    var t = '<table style="width:100%;border-collapse:collapse;font-size:14px">';
-    t += row('订单名称', $('orderName').value || '-');
-    t += row('订单时间', $('orderDate').value || '-');
-    t += row('客户来源', $('customerSource').value || '-');
-    t += row('车系', $('car').value || '-');
-    t += row('配置 / 车型', $('model').value || '-');
-    t += row('颜色', $('color').value || '-');
-    t += row('内饰', $('interior').value || '-');
-    t += row('按揭', $('mortgage').value || '-');
-    t += row('手机号码', $('phone').value || '-');
-    t += row('交车时间', $('delivery').value || '-');
-    t += row('销售顾问', $('salesman').value || '-');
-    t += row('车辆来源', $('vehicleSource').value || '-');
-    t += row('厂方指导价', fmt($('guidePrice').textContent));
-    t += row('成本价', fmt($('costPrice').textContent));
-    t += row('现金优惠', fmt($('cashDiscount').value));
-    t += row('置换补贴', fmt($('subsidyReplace').value));
-    t += row('保险补贴', fmt($('subsidyInsurance').value));
-    t += row('电商补贴', fmt($('subsidyEcom').value));
-    t += row('基地补贴', fmt($('subsidyBase').value));
-    t += row('特殊折让', fmt($('specialDiscount').value));
-    t += row('实际开票价', fmt($('actualPrice').textContent));
-    t += row('单车毛利', fmt($('unitProfit').textContent));
-    t += row('单车毛利率', $('unitMargin').textContent);
-    t += row('三级毛利', fmt($('sumTier3').textContent));
-    t += row('毛利', fmt($('sumGross').textContent));
-    t += row('整车毛利', fmt($('sumTotal').textContent));
-    t += row('限价', fmt($('sumLimit').textContent));
-    t += row('是否超限价', $('sumOverV').textContent);
-    t += '</table>';
-    $('printArea').innerHTML = h + t;
+  /* ================= 导出/打印模板（共用美观版式，接近页面） ================= */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  }
+  function kv(k, v) {
+    return '<div class="ex-i"><span class="ex-k">' + k + '</span><span class="ex-v">' + (v === '' ? '-' : esc(v)) + '</span></div>';
+  }
+  function gatherModule(sel, label, cols) {
+    var rows = document.querySelectorAll(sel + ' .dyn-row');
+    var visible = [];
+    rows.forEach(function (r) {
+      var cells = [], has = false;
+      cols.forEach(function (c) {
+        var el = r.querySelector('[data-role="' + c.role + '"]');
+        var t;
+        if (c.calc) {
+          t = el.textContent;
+        } else {
+          t = (el && el.value != null) ? String(el.value) : '';
+        }
+        if (!c.calc && t !== '') has = true;
+        cells.push(c.calc ? (t === '-' ? '-' : t) : (t || '-'));
+      });
+      if (has) visible.push(cells);
+    });
+    if (!visible.length) return '';
+    var h = '<div class="ex-mb"><div class="ex-mt">' + label + '</div><table class="ex-tbl"><tr>';
+    cols.forEach(function (c) { h += '<th>' + c.head + '</th>'; });
+    h += '</tr>';
+    visible.forEach(function (cells) {
+      h += '<tr>';
+      cells.forEach(function (c) { h += '<td>' + c + '</td>'; });
+      h += '</tr>';
+    });
+    h += '</table></div>';
+    return h;
   }
 
-  /* ================= 导出图片（固定版式，手机/电脑一致） ================= */
-  function esc(s) {
-    return String(s == null ? '-' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-  function exRow(k, v, muted) {
-    return '<tr><td class="k">' + k + '</td><td class="v' + (muted ? ' ex-muted' : '') + '">' + v + '</td></tr>';
-  }
   function buildExport() {
-    $('exDate').textContent = '日期：' + new Date().toLocaleDateString('zh-CN');
-    var h = '';
-    h += '<div class="ex-sec">订单信息</div><table class="ex-table">';
-    h += exRow('订单名称', esc($('orderName').value));
-    h += exRow('订单时间', esc($('orderDate').value));
-    h += exRow('客户来源', esc($('customerSource').value));
-    h += exRow('车系 / 车型', esc($('car').value) + ' / ' + esc($('model').value));
-    h += exRow('颜色 / 内饰', esc($('color').value) + ' / ' + esc($('interior').value));
-    h += exRow('按揭', esc($('mortgage').value));
-    h += exRow('手机号码', esc($('phone').value));
-    h += exRow('交车时间', esc($('delivery').value));
-    h += exRow('销售顾问', esc($('salesman').value));
-    h += exRow('车辆来源', esc($('vehicleSource').value));
-    h += '</table>';
-    h += '<div class="ex-sec">价格与毛利</div><table class="ex-table">';
-    h += exRow('厂方指导价（含颜色加价）', fmt($('guidePrice').textContent));
-    h += exRow('成本价', fmt($('costPrice').textContent));
-    h += exRow('现金优惠', fmt($('cashDiscount').value));
-    h += exRow('置换补贴', fmt($('subsidyReplace').value));
-    h += exRow('保险补贴', fmt($('subsidyInsurance').value));
-    h += exRow('电商补贴', fmt($('subsidyEcom').value));
-    h += exRow('基地补贴', fmt($('subsidyBase').value));
-    h += exRow('特殊折让', fmt($('specialDiscount').value));
-    h += exRow('实际开票价', fmt($('actualPrice').textContent));
-    h += exRow('单车毛利', fmt($('unitProfit').textContent));
-    h += exRow('单车毛利率', $('unitMargin').textContent);
-    h += '</table>';
-    h += '<div class="ex-sec">汇总</div><table class="ex-table">';
-    h += exRow('三级毛利', fmt($('sumTier3').textContent));
-    h += exRow('毛利', fmt($('sumGross').textContent));
-    h += exRow('整车毛利', fmt($('sumTotal').textContent));
-    h += exRow('限价', fmt($('sumLimit').textContent));
-    h += exRow('毛利达成', fmt($('sumAchieve').textContent));
-    h += exRow('是否超限价', $('sumOverV').textContent);
-    h += '</table>';
-    $('exportArea').innerHTML = $('exportArea').querySelector('.ex-title').outerHTML + '<div class="ex-sub" id="exDate2"></div>' + h;
-    $('exDate2').textContent = '日期：' + new Date().toLocaleDateString('zh-CN');
+    var date = today();
+    var h = '<div class="ex-wrap">';
+    h += '<div class="ex-head"><div class="ex-brand"><span class="ex-dot"></span>嘉兴方程豹 · 订单价格申请单</div><div class="ex-date">' + date + '</div></div>';
+    h += '<div class="ex-summary">';
+    h += '<div class="ex-s"><span class="ex-sk">三级毛利</span><span class="ex-sv">' + fmt($('sumTier3').textContent) + '</span></div>';
+    h += '<div class="ex-s"><span class="ex-sk">毛利</span><span class="ex-sv">' + fmt($('sumGross').textContent) + '</span></div>';
+    h += '<div class="ex-s"><span class="ex-sk">整车毛利</span><span class="ex-sv">' + fmt($('sumTotal').textContent) + '</span></div>';
+    h += '<div class="ex-s"><span class="ex-sk">限价</span><span class="ex-sv">' + fmt($('sumLimit').textContent) + '</span></div>';
+    h += '<div class="ex-s"><span class="ex-sk">毛利达成</span><span class="ex-sv">' + fmt($('sumAchieve').textContent) + '</span></div>';
+    h += '<div class="ex-s"><span class="ex-sk">是否超限价</span><span class="ex-sv">' + esc($('sumOverV').textContent) + '</span></div>';
+    h += '</div>';
+    h += '<div class="ex-sec">订单信息</div><div class="ex-grid">';
+    h += kv('订单名称', $('orderName').value);
+    h += kv('订单时间', $('orderDate').value);
+    h += kv('客户来源', $('customerSource').value);
+    h += kv('车系 / 车型', ($('car').value || '') + ' / ' + ($('model').value || ''));
+    h += kv('颜色 / 内饰', ($('color').value || '') + ' / ' + ($('interior').value || ''));
+    h += kv('按揭', $('mortgage').value);
+    h += kv('手机号码', $('phone').value);
+    h += kv('交车时间', $('delivery').value);
+    h += kv('销售顾问', $('salesman').value);
+    h += kv('车辆来源', $('vehicleSource').value);
+    h += '</div>';
+    h += '<div class="ex-sec">价格与毛利</div><div class="ex-price">';
+    h += '<div class="ex-p"><span class="ex-pk">厂方指导价<br>（含颜色加价）</span><span class="ex-pv">' + fmt($('guidePrice').textContent) + '</span></div>';
+    h += '<div class="ex-p"><span class="ex-pk">成本价</span><span class="ex-pv">' + fmt($('costPrice').textContent) + '</span></div>';
+    h += '<div class="ex-p ex-hl"><span class="ex-pk">实际开票价</span><span class="ex-pv">' + fmt($('actualPrice').textContent) + '</span></div>';
+    h += '<div class="ex-p ex-hl"><span class="ex-pk">单车毛利</span><span class="ex-pv">' + fmt($('unitProfit').textContent) + '</span></div>';
+    h += '<div class="ex-p"><span class="ex-pk">单车毛利率</span><span class="ex-pv">' + esc($('unitMargin').textContent) + '</span></div>';
+    h += '</div>';
+    h += '<div class="ex-grid">';
+    h += kv('现金优惠', fmtIn($('cashDiscount')));
+    h += kv('置换补贴', fmtIn($('subsidyReplace')));
+    h += kv('保险补贴', fmtIn($('subsidyInsurance')));
+    h += kv('电商补贴', fmtIn($('subsidyEcom')));
+    h += kv('基地补贴', fmtIn($('subsidyBase')));
+    h += kv('特殊折让', fmtIn($('specialDiscount')));
+    h += kv('特殊车型折让 / 返利', fmtIn($('specialRebate')));
+    h += '</div>';
+    h += '<div class="ex-sec">三级毛利构成</div><div class="ex-tier3">';
+    h += gatherModule('#loanRows', '贷款', [{ role: 'loan-bank', head: '银行' }, { role: 'loan-rate', head: '返息率' }, { role: 'loan-amount', head: '贷款金额' }, { role: 'loan-rebate', head: '返佣' }, { role: 'loan-rebateamt', head: '返息金额', calc: 1 }, { role: 'loan-profit', head: '毛利', calc: 1 }]);
+    h += gatherModule('#jingpinRows', '精品', [{ role: 'jp-name', head: '项目' }, { role: 'jp-value', head: '产值' }, { role: 'jp-cost', head: '成本', calc: 1 }, { role: 'jp-profit', head: '毛利', calc: 1 }]);
+    h += gatherModule('#optRows', '选装', [{ role: 'opt-value', head: '产值' }, { role: 'opt-cost', head: '成本' }, { role: 'opt-profit', head: '毛利', calc: 1 }]);
+    h += gatherModule('#mtRows', '保养', [{ role: 'mt-count', head: '次数' }, { role: 'mt-value', head: '产值' }, { role: 'mt-ucost', head: '单价成本' }, { role: 'mt-profit', head: '毛利', calc: 1 }]);
+    h += gatherModule('#couponRows', '卡券', [{ role: 'cp-value', head: '产值' }, { role: 'cp-cost', head: '成本' }, { role: 'cp-profit', head: '毛利', calc: 1 }]);
+    h += gatherModule('#insRows', '保险', [{ role: 'ins-bonus', head: '预估返佣' }, { role: 'ins-profit', head: '毛利', calc: 1 }]);
+    h += gatherModule('#regRows', '上牌', [{ role: 'reg-charge', head: '收费' }, { role: 'reg-cost', head: '成本' }, { role: 'reg-profit', head: '毛利', calc: 1 }]);
+    h += '</div>';
+    h += '</div>';
+    $('exportArea').innerHTML = h;
+  }
+
+  function buildPrint() {
+    buildExport();
+    $('printArea').innerHTML = $('exportArea').innerHTML;
+  }
+
+  /* ================= 导出图片（预览 + 确认导出） ================= */
+  var pendingDataUrl = null;
+  function showModal(on) {
+    $('previewModal').style.display = on ? 'flex' : 'none';
   }
   function exportImage() {
     if (typeof html2canvas === 'undefined') {
@@ -464,13 +487,20 @@
     buildExport();
     var el = $('exportArea');
     html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false }).then(function (canvas) {
-      var link = document.createElement('a');
-      link.download = '订单价格申请单_' + new Date().getTime() + '.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      pendingDataUrl = canvas.toDataURL('image/png');
+      $('previewImg').src = pendingDataUrl;
+      showModal(true);
     }).catch(function () {
       alert('导出失败，请重试');
     });
+  }
+  function confirmExport() {
+    if (!pendingDataUrl) return;
+    var a = document.createElement('a');
+    a.download = '订单价格申请单_' + new Date().getTime() + '.png';
+    a.href = pendingDataUrl;
+    a.click();
+    showModal(false);
   }
 
   /* ================= 事件 ================= */
@@ -488,6 +518,10 @@
     $('adminBtn').addEventListener('click', function () { location.href = 'admin.html'; });
     $('imgBtn').addEventListener('click', exportImage);
     $('printBtn').addEventListener('click', function () { buildPrint(); window.print(); });
+    $('previewClose').addEventListener('click', function () { showModal(false); });
+    $('previewCancel').addEventListener('click', function () { showModal(false); });
+    $('previewConfirm').addEventListener('click', confirmExport);
+    $('previewModal').addEventListener('click', function (e) { if (e.target === this) showModal(false); });
   }
 
   /* ================= 启动 ================= */
