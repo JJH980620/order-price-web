@@ -251,7 +251,7 @@
     }
     setOptions(ms, D.vehicles[car].map(function (m) { return m.model; }), '请选择车型');
     setOptions(cs, (D.colors[car] || []).map(function (c) { return c.name; }), '请选择颜色');
-    setOptions(is_, D.interiors[car] || [], '请选择内饰');
+    setOptions(is_, (D.interiors[car] || []).map(function (p) { return typeof p === 'string' ? p : p.name; }), '请选择内饰');
     document.querySelectorAll('#jingpinRows .dyn-row').forEach(function (r) {
       setOptions(r.querySelector('[data-role="jp-name"]'),
         (D.jingpin[car] || []).map(function (p) { return p.name; }), '选择项目');
@@ -375,7 +375,7 @@
     var overEl = $('sumOver');
     if (limit === 0) { overEl.className = 'summary-item'; $('sumOverV').textContent = '-'; }
     else if (over > 0) { overEl.className = 'summary-item ok'; $('sumOverV').textContent = '超限 +' + fmt(over); }
-    else if (over < 0) { overEl.className = 'summary-item warn'; $('sumOverV').textContent = '未超限'; }
+    else if (over < 0) { overEl.className = 'summary-item warn'; $('sumOverV').textContent = fmt(over); }
     else { overEl.className = 'summary-item'; $('sumOverV').textContent = '持平'; }
   }
 
