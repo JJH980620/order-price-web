@@ -479,6 +479,35 @@
     });
   }
 
+  /* ---------- 部署状态自动检测 ---------- */
+  function pollDeploy(cfg, saveTime) {
+    var st = $('saveStatus');
+    var url = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/pages/builds/latest';
+    var headers = { Authorization: 'token ' + cfg.token };
+    fetch(url, { headers: headers })
+      .then(function (r) { return r.json(); })
+      .then(function (b) {
+        var t = Date.parse(b.updated_at || b.created_at || '') || 0;
+        if (b.status === 'errored') {
+          st.textContent = '部署失败：' + ((b.error && b.error.message) ? b.error.message : '未知错误');
+          st.className = 'status err';
+          return;
+        }
+        if (b.status === 'built' && t >= saveTime) {
+          st.textContent = '已更新完成 ✓ 刷新报价页即可看到新数据';
+          st.className = 'status ok';
+          return;
+        }
+        st.textContent = '正在部署更新... ' + (b.status === 'building' ? '构建中' : '排队中');
+        st.className = 'status';
+        setTimeout(function () { pollDeploy(cfg, saveTime); }, 10000);
+      })
+      .catch(function () {
+        st.textContent = '已保存，但无法自动检测部署状态（网络问题）。稍后刷新报价页确认更新';
+        st.className = 'status';
+      });
+  }
+
   /* ---------- 生成输出 ---------- */
   function buildOutput() {
     var out = {
@@ -554,7 +583,8 @@
       })
       .then(function (r) {
         if (r.ok) {
-          st.textContent = '已保存 ✓ 等待 GitHub Pages 更新（约 1-2 分钟）'; st.className = 'status ok';
+          st.textContent = '已保存 ✓ 正在部署更新...'; st.className = 'status ok';
+          pollDeploy(cfg, Date.now());
         } else {
           return r.json().then(function (j) {
             var msg = (j.message || '未知错误') + (j.errors ? ' ' + j.errors.map(function (e) { return e.message; }).join(';') : '');
