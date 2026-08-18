@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>嘉兴方程豹 · 订单价格申请</title>
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -64,13 +64,13 @@
     </div>
 
     <div class="grid" style="margin-top:16px">
-      <div class="field"><label>现金优惠</label><input id="cashDiscount" type="number" value="0" min="0" step="100"></div>
-      <div class="field"><label>置换补贴</label><input id="subsidyReplace" type="number" value="0" min="0" step="100"></div>
-      <div class="field"><label>保险补贴</label><input id="subsidyInsurance" type="number" value="0" min="0" step="100"></div>
-      <div class="field"><label>电商补贴</label><input id="subsidyEcom" type="number" value="0" min="0" step="100"></div>
-      <div class="field"><label>基地补贴</label><input id="subsidyBase" type="number" value="0" min="0" step="100"></div>
-      <div class="field"><label>特殊折让</label><input id="specialDiscount" type="number" value="0" min="0" step="100"></div>
-      <div class="field"><label>特殊车型折让 / 返利</label><input id="specialRebate" type="number" value="0" min="0" step="100"></div>
+      <div class="field"><label>现金优惠</label><input id="cashDiscount" type="number" min="0" step="100"></div>
+      <div class="field"><label>置换补贴</label><input id="subsidyReplace" type="number" min="0" step="100"></div>
+      <div class="field"><label>保险补贴</label><input id="subsidyInsurance" type="number" min="0" step="100"></div>
+      <div class="field"><label>电商补贴</label><input id="subsidyEcom" type="number" min="0" step="100"></div>
+      <div class="field"><label>基地补贴</label><input id="subsidyBase" type="number" min="0" step="100"></div>
+      <div class="field"><label>特殊折让</label><input id="specialDiscount" type="number" min="0" step="100"></div>
+      <div class="field"><label>特殊车型折让 / 返利</label><input id="specialRebate" type="number" min="0" step="100"></div>
     </div>
   </section>
 
@@ -154,8 +154,22 @@
 <!-- 打印区域 -->
 <div id="printArea"></div>
 
+<!-- 导出图片预览模态框 -->
+<div id="previewModal" class="modal-mask">
+  <div class="modal-box">
+    <div class="modal-head">导出图片预览
+      <button type="button" class="modal-close" id="previewClose">×</button>
+    </div>
+    <div class="modal-body"><img id="previewImg" alt="预览"></div>
+    <div class="modal-foot">
+      <button class="btn" id="previewCancel">取消</button>
+      <button class="btn primary" id="previewConfirm">确认导出</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="data.js?v=3"></script>
-<script src="app.js?v=3"></script>
+<script src="data.js?v=4"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>
