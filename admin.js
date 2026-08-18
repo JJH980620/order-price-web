@@ -509,17 +509,51 @@
   }
 
   /* ---------- 写版本标记文件（供报价页检测更新） ---------- */
-  function writeVersionFile(cfg, version) {
-    var url = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/data.version.json';
+  function commitFiles(cfg, files) {
     var headers = { Authorization: 'token ' + cfg.token, 'Content-Type': 'application/json' };
-    return fetch(url + '?ref=' + encodeURIComponent(cfg.branch), { headers: headers })
+    var base = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo;
+    return fetch(base + '/git/refs/heads/' + cfg.branch, { headers: headers })
       .then(function (r) { return r.json(); })
-      .then(function (f) {
-        var body = { message: '更新版本标记', content: utf8ToB64(JSON.stringify({ v: version })), branch: cfg.branch };
-        if (f.sha) body.sha = f.sha;
-        return fetch(url, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
+      .then(function (ref) {
+        if (!ref.object || !ref.object.sha) throw new Error('无法读取分支');
+        var headSha = ref.object.sha;
+        var treeBase = ref.object.tree_sha || headSha;
+        var blobs = Object.keys(files).map(function (path) {
+          return fetch(base + '/git/blobs', {
+            method: 'POST', headers: headers,
+            body: JSON.stringify({ content: files[path], encoding: 'utf-8' })
+          }).then(function (r) { return r.json(); }).then(function (b) {
+            if (!b.sha) throw new Error('创建内容失败');
+            return { path: path, mode: '100644', type: 'blob', sha: b.sha };
+          });
+        });
+        return Promise.all(blobs).then(function (items) {
+          return fetch(base + '/git/trees', {
+            method: 'POST', headers: headers,
+            body: JSON.stringify({ base_tree: treeBase, tree: items })
+          }).then(function (r) { return r.json(); }).then(function (t) {
+            if (!t.sha) throw new Error('创建目录失败');
+            return { treeSha: t.sha, headSha: headSha };
+          });
+        });
       })
-      .catch(function () {});
+      .then(function (data) {
+        return fetch(base + '/git/commits', {
+          method: 'POST', headers: headers,
+          body: JSON.stringify({ message: '更新订单价格数据', tree: data.treeSha, parents: [data.headSha] })
+        }).then(function (r) { return r.json(); }).then(function (c) {
+          if (!c.sha) throw new Error('创建提交失败');
+          return c.sha;
+        });
+      })
+      .then(function (commitSha) {
+        return fetch(base + '/git/refs/heads/' + cfg.branch, {
+          method: 'PATCH', headers: headers,
+          body: JSON.stringify({ sha: commitSha, force: false })
+        }).then(function (r) {
+          if (!r.ok) return r.json().then(function (j) { throw new Error(j.message || '提交失败'); });
+        });
+      });
   }
 
   /* ---------- 生成输出 ---------- */
@@ -583,31 +617,20 @@
     }
     saveCfg(cfg);
     var content = makeDataJs();
+    var version = Date.now();
     var st = $('saveStatus');
     st.textContent = '正在写入 GitHub...'; st.className = 'status';
-    var url = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + cfg.path;
-    var headers = { Authorization: 'token ' + cfg.token, 'Content-Type': 'application/json' };
-    // 先获取现有文件 sha
-    fetch(url + '?ref=' + encodeURIComponent(cfg.branch), { headers: headers })
-      .then(function (r) { return r.json(); })
-      .then(function (f) {
-        var body = { message: '更新订单价格数据', content: utf8ToB64(content), branch: cfg.branch };
-        if (f.sha) body.sha = f.sha;
-        return fetch(url, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
+    var files = {};
+    files[cfg.path] = content;
+    files['data.version.json'] = JSON.stringify({ v: version });
+    commitFiles(cfg, files)
+      .then(function () {
+        st.textContent = '已保存 ✓ 正在部署更新...'; st.className = 'status ok';
+        pollDeploy(cfg, version);
       })
-      .then(function (r) {
-        if (r.ok) {
-          st.textContent = '已保存 ✓ 正在部署更新...'; st.className = 'status ok';
-          writeVersionFile(cfg, Date.now()).then(function () { pollDeploy(cfg, Date.now()); });
-        } else {
-          return r.json().then(function (j) {
-            var msg = (j.message || '未知错误') + (j.errors ? ' ' + j.errors.map(function (e) { return e.message; }).join(';') : '');
-            st.textContent = '保存失败：' + msg; st.className = 'status err';
-          });
-        }
-      })
-      .catch(function () {
-        st.textContent = '保存失败：网络错误（无法访问 GitHub，国内网络可能需代理/加速）'; st.className = 'status err';
+      .catch(function (e) {
+        st.textContent = '保存失败：' + (e && e.message ? e.message : '网络错误（无法访问 GitHub，国内网络可能需代理/加速）');
+        st.className = 'status err';
       });
   }
   function previewData() {
