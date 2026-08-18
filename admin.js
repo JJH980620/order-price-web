@@ -11,6 +11,7 @@
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
   function initData() {
     D = clone(window.ORDER_DATA);
+    D.globalColors = D.globalColors || {};
     // 保证每个车系在所有集合都有项
     D.carOrder.forEach(function (c) {
       D.vehicles[c] = D.vehicles[c] || [];
@@ -102,17 +103,47 @@
     return h;
   }
 
-  /* ---------- 渲染：颜色/加价（按车系） ---------- */
+  function countCarOf(color) {
+    var n = 0;
+    D.carOrder.forEach(function (c) {
+      (D.colors[c] || []).forEach(function (x) { if (x.name === color) n++; });
+    });
+    return n;
+  }
+  function toggleGlobal(color, checked) {
+    if (checked) {
+      var cur = 0;
+      D.carOrder.forEach(function (c) {
+        (D.colors[c] || []).forEach(function (x) { if (x.name === color) cur = x.premium; });
+      });
+      D.globalColors[color] = cur;
+      D.carOrder.forEach(function (c) {
+        (D.colors[c] || []).forEach(function (x) { if (x.name === color) x.premium = cur; });
+      });
+    } else {
+      delete D.globalColors[color];
+    }
+    renderTab('color');
+  }
+
+  /* ---------- 渲染：颜色/加价（按车系，多车系颜色可设全局） ---------- */
   function renderColor() {
     var h = '';
     D.carOrder.forEach(function (car) {
       h += '<div class="mg-block"><h3>' + car + '（可选颜色 / 加价）</h3>';
-      h += '<div style="display:grid;grid-template-columns:1fr .7fr 30px;gap:8px;margin-bottom:6px">' +
-           '<span class="mg-label">颜色</span><span class="mg-label">加价(元)</span><span></span></div>';
+      h += '<div style="display:grid;grid-template-columns:1fr .7fr auto 30px;gap:8px;margin-bottom:6px">' +
+           '<span class="mg-label">颜色</span><span class="mg-label">加价(元)</span><span class="mg-label">全局</span><span></span></div>';
       (D.colors[car] || []).forEach(function (c, i) {
-        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr 30px">';
+        var multi = countCarOf(c.name) > 1;
+        var isGlobal = D.globalColors[c.name] !== undefined;
+        var disp = isGlobal ? D.globalColors[c.name] : c.premium;
+        var g = multi
+          ? '<span class="mg-label"><input type="checkbox" data-global data-color="' + c.name + '"' + (isGlobal ? ' checked' : '') + '> 全局</span>'
+          : '<span></span>';
+        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr auto 30px">';
         h += '<input data-write=\'{"type":"color","car":"' + car + '","idx":' + i + '}\' value="' + c.name + '">';
-        h += '<input type="number" data-write=\'{"type":"colorPremium","car":"' + car + '","idx":' + i + '}\' value="' + c.premium + '">';
+        h += '<input type="number" data-premium-color="' + c.name + '" data-write=\'{"type":"colorPremium","car":"' + car + '","idx":' + i + '}\' value="' + disp + '">';
+        h += g;
         h += '<button class="del-sm" data-del=\'{"type":"color","car":"' + car + '","idx":' + i + '}\'>x</button>';
         h += '</div>';
       });
@@ -226,7 +257,16 @@
       case 'jpName': D.jingpin[w.car][w.idx].name = val; break;
       case 'jpBuy': D.jingpin[w.car][w.idx].buy = val; break;
       case 'color': D.colors[w.car][w.idx].name = val; break;
-      case 'colorPremium': D.colors[w.car][w.idx].premium = val; break;
+      case 'colorPremium': {
+        var cname = D.colors[w.car][w.idx].name;
+        if (D.globalColors[cname] !== undefined) {
+          D.globalColors[cname] = val;
+          document.querySelectorAll('#tabContent input[data-premium-color="' + cname + '"]').forEach(function (inp) { inp.value = val; });
+        } else {
+          D.colors[w.car][w.idx].premium = val;
+        }
+        break;
+      }
       case 'interior': D.interiors[w.car][w.idx] = val; break;
       case 'mtSell': D.maintain[w.car].sell = val; break;
       case 'mtCost': D.maintain[w.car].cost = val; break;
@@ -308,6 +348,9 @@
     root.querySelectorAll('[data-del]').forEach(function (b) {
       b.addEventListener('click', function () { delEdit(JSON.parse(b.dataset.del)); });
     });
+    root.querySelectorAll('input[data-global]').forEach(function (cb) {
+      cb.addEventListener('change', function () { toggleGlobal(cb.dataset.color, cb.checked); });
+    });
     if ($('testConn')) $('testConn').addEventListener('click', testConnection);
   }
 
@@ -315,7 +358,7 @@
   function buildOutput() {
     var out = {
       vehicles: {}, carOrder: D.carOrder.slice(), jingpin: {},
-      colors: {}, interiors: {}, maintain: {}, banks: D.banks.slice(), loan: {}
+      colors: {}, interiors: {}, maintain: {}, banks: D.banks.slice(), loan: {}, globalColors: D.globalColors
     };
     D.carOrder.forEach(function (c) {
       out.vehicles[c] = D.vehicles[c] || [];
