@@ -63,14 +63,16 @@
   function renderCar() {
     var h = '';
     D.carOrder.forEach(function (car) {
-      h += '<div class="mg-block"><h3>';
+      h += '<div class="mg-block" data-drag-car="' + car + '"><h3>';
+      h += '<span class="drag-handle" draggable="true" title="拖拽调整顺序">⠿</span>';
       h += '<input data-write=\'{"type":"carName","car":"' + car + '"}\' value="' + car + '" style="width:140px">';
       h += '<button class="del-sm" data-del=\'{"type":"car","car":"' + car + '"}\' title="删除车系">x</button>';
       h += '</h3>';
-      h += '<div style="display:grid;grid-template-columns:.6fr 1fr 1fr 30px;gap:8px;margin-bottom:6px">' +
-           '<span class="mg-label">配置/车型</span><span class="mg-label">指导价</span><span class="mg-label">成本价</span><span></span></div>';
+      h += '<div style="display:grid;grid-template-columns:30px .6fr 1fr 1fr 30px;gap:8px;margin-bottom:6px">' +
+           '<span></span><span class="mg-label">配置/车型</span><span class="mg-label">指导价</span><span class="mg-label">成本价</span><span></span></div>';
       (D.vehicles[car] || []).forEach(function (m, i) {
-        h += '<div class="mg-row" style="grid-template-columns:.6fr 1fr 1fr 30px">';
+        h += '<div class="mg-row" style="grid-template-columns:30px .6fr 1fr 1fr 30px" data-drag-car="' + car + '" data-drag-idx="' + i + '">';
+        h += '<span class="drag-handle" draggable="true" title="拖拽调整顺序">⠿</span>';
         h += '<input data-write=\'{"type":"model","car":"' + car + '","idx":' + i + '}\' value="' + m.model + '">';
         h += '<input type="number" data-write=\'{"type":"guide","car":"' + car + '","idx":' + i + '}\' value="' + m.guide + '">';
         h += '<input type="number" data-write=\'{"type":"cost","car":"' + car + '","idx":' + i + '}\' value="' + m.cost + '">';
@@ -377,6 +379,111 @@
       cb.addEventListener('change', function () { toggleGlobal(cb.dataset.color, cb.checked); });
     });
     if ($('testConn')) $('testConn').addEventListener('click', testConnection);
+    bindCarDrag();
+  }
+
+  /* ---------- 车系/车型 拖拽交换 ---------- */
+  function bindCarDrag() {
+    var root = $('tabContent');
+    var blocks = root.querySelectorAll('.mg-block[data-drag-car]');
+    if (!blocks.length) return;
+
+    function swapDom(a, b) {
+      if (!a || !b || a === b) return;
+      var parent = a.parentNode;
+      var tmp = document.createElement('div');
+      parent.insertBefore(tmp, a);
+      parent.insertBefore(a, b);
+      parent.insertBefore(b, tmp);
+      parent.removeChild(tmp);
+    }
+    function clearOver() {
+      root.querySelectorAll('.mg-block, .mg-row').forEach(function (e) { e.classList.remove('drag-over', 'drag-src'); });
+    }
+    function reindexModelRows(car) {
+      var rows = [];
+      root.querySelectorAll('.mg-row').forEach(function (r) {
+        if (r.dataset.dragCar === car) rows.push(r);
+      });
+      rows.forEach(function (r, ni) {
+        r.dataset.dragIdx = ni;
+        r.querySelectorAll('[data-write]').forEach(function (inp) {
+          var w = JSON.parse(inp.dataset.write);
+          if (w.car === car && typeof w.idx === 'number') { w.idx = ni; inp.dataset.write = JSON.stringify(w); }
+        });
+      });
+    }
+
+    // 车系块
+    blocks.forEach(function (block) {
+      block.addEventListener('dragover', function (e) {
+        if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types, 'application/x-car') >= 0) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          block.classList.add('drag-over');
+        }
+      });
+      block.addEventListener('dragleave', function () { block.classList.remove('drag-over'); });
+      block.addEventListener('drop', function (e) {
+        e.preventDefault(); block.classList.remove('drag-over');
+        var srcCar = e.dataTransfer.getData('application/x-car');
+        var dstCar = block.dataset.dragCar;
+        if (!srcCar || srcCar === dstCar) return;
+        var ia = D.carOrder.indexOf(srcCar), ib = D.carOrder.indexOf(dstCar);
+        if (ia < 0 || ib < 0) return;
+        D.carOrder[ia] = dstCar; D.carOrder[ib] = srcCar;
+        var elA = null;
+        blocks.forEach(function (b) { if (b.dataset.dragCar === srcCar) elA = b; });
+        swapDom(elA, block);
+      });
+      block.addEventListener('dragend', clearOver);
+      var handle = block.querySelector('.drag-handle');
+      if (handle) {
+        handle.addEventListener('dragstart', function (e) {
+          e.dataTransfer.setData('application/x-car', block.dataset.dragCar);
+          e.dataTransfer.effectAllowed = 'move';
+          block.classList.add('drag-src');
+        });
+      }
+    });
+
+    // 车型行
+    root.querySelectorAll('.mg-row').forEach(function (row) {
+      row.addEventListener('dragover', function (e) {
+        if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types, 'application/x-model') >= 0) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          row.classList.add('drag-over');
+        }
+      });
+      row.addEventListener('dragleave', function () { row.classList.remove('drag-over'); });
+      row.addEventListener('drop', function (e) {
+        e.preventDefault(); row.classList.remove('drag-over');
+        var payload = e.dataTransfer.getData('application/x-model');
+        if (!payload) return;
+        var src = JSON.parse(payload);
+        var dstCar = row.dataset.dragCar, dstIdx = parseInt(row.dataset.dragIdx);
+        if (!D.vehicles[src.car] || src.car !== dstCar || src.idx === dstIdx) return;
+        var arr = D.vehicles[src.car];
+        if (src.idx < 0 || src.idx >= arr.length || dstIdx < 0 || dstIdx >= arr.length) return;
+        var t = arr[src.idx]; arr[src.idx] = arr[dstIdx]; arr[dstIdx] = t;
+        var el1 = null;
+        root.querySelectorAll('.mg-row').forEach(function (r) {
+          if (r.dataset.dragCar === src.car && parseInt(r.dataset.dragIdx) === src.idx) el1 = r;
+        });
+        swapDom(el1, row);
+        reindexModelRows(src.car);
+      });
+      row.addEventListener('dragend', clearOver);
+      var handle = row.querySelector('.drag-handle');
+      if (handle) {
+        handle.addEventListener('dragstart', function (e) {
+          e.dataTransfer.setData('application/x-model', JSON.stringify({ car: row.dataset.dragCar, idx: parseInt(row.dataset.dragIdx) }));
+          e.dataTransfer.effectAllowed = 'move';
+          row.classList.add('drag-src');
+        });
+      }
+    });
   }
 
   /* ---------- 生成输出 ---------- */
