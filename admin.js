@@ -13,6 +13,8 @@
     D = clone(window.ORDER_DATA);
     D.globalColors = D.globalColors || {};
     D.globalJps = D.globalJps || {};
+    D.globalInteriors = D.globalInteriors || {};
+    D.globalMt = D.globalMt || null;
     D.dropdowns = D.dropdowns || { '按揭': [], '客户来源': [], '车辆来源': [] };
     // 保证每个车系在所有集合都有项
     D.carOrder.forEach(function (c) {
@@ -21,7 +23,9 @@
       D.colors[c] = (D.colors[c] || []).map(function (x) {
         return typeof x === 'string' ? { name: x, premium: 0 } : x;
       });
-      D.interiors[c] = D.interiors[c] || [];
+      D.interiors[c] = (D.interiors[c] || []).map(function (x) {
+        return typeof x === 'string' ? { name: x, premium: 0 } : x;
+      });
       D.maintain[c] = D.maintain[c] || { sell: 0, cost: 0 };
       D.loan[c] = D.loan[c] || { insBonus: 0, limit: 0 };
     });
@@ -187,14 +191,24 @@
     return h;
   }
 
-  /* ---------- 渲染：内饰 ---------- */
+  /* ---------- 渲染：内饰（同名可全局统一加价） ---------- */
   function renderInterior() {
     var h = '';
     D.carOrder.forEach(function (car) {
       h += '<div class="mg-block"><h3>' + car + '</h3>';
+      h += '<div style="display:grid;grid-template-columns:1fr .7fr auto 30px;gap:8px;margin-bottom:6px">' +
+           '<span class="mg-label">内饰名称</span><span class="mg-label">加价(元)</span><span class="mg-label">全局</span><span></span></div>';
       (D.interiors[car] || []).forEach(function (c, i) {
-        h += '<div class="mg-row" style="grid-template-columns:1fr 30px">';
-        h += '<input data-write=\'{"type":"interior","car":"' + car + '","idx":' + i + '}\' value="' + c + '">';
+        var multi = countIntOf(c.name) > 1;
+        var isGlobal = D.globalInteriors[c.name] !== undefined;
+        var disp = isGlobal ? D.globalInteriors[c.name] : c.premium;
+        var g = multi
+          ? '<span class="mg-label"><input type="checkbox" data-global-interior data-int="' + c.name + '"' + (isGlobal ? ' checked' : '') + '> 全局</span>'
+          : '<span></span>';
+        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr auto 30px">';
+        h += '<input data-write=\'{"type":"interiorName","car":"' + car + '","idx":' + i + '}\' value="' + c.name + '">';
+        h += '<input type="number" data-int-buy="' + c.name + '" data-write=\'{"type":"interiorPremium","car":"' + car + '","idx":' + i + '}\' value="' + disp + '">';
+        h += g;
         h += '<button class="del-sm" data-del=\'{"type":"interior","car":"' + car + '","idx":' + i + '}\'>x</button>';
         h += '</div>';
       });
@@ -204,20 +218,75 @@
     return h;
   }
 
-  /* ---------- 渲染：保养 ---------- */
+  function countIntOf(name) {
+    var n = 0;
+    D.carOrder.forEach(function (c) {
+      (D.interiors[c] || []).forEach(function (x) { if (x.name === name) n++; });
+    });
+    return n;
+  }
+  function toggleGlobalInterior(name, checked) {
+    if (checked) {
+      var cur = 0;
+      D.carOrder.forEach(function (c) {
+        (D.interiors[c] || []).forEach(function (x) { if (x.name === name) cur = x.premium; });
+      });
+      D.globalInteriors[name] = cur;
+      D.carOrder.forEach(function (c) {
+        (D.interiors[c] || []).forEach(function (x) { if (x.name === name) x.premium = cur; });
+      });
+    } else {
+      delete D.globalInteriors[name];
+    }
+    renderTab('interior');
+  }
+
+  /* ---------- 渲染：保养（可全局统一销售/成本价） ---------- */
   function renderMt() {
-    var h = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">' +
-            '<span class="mg-label">车系</span><span style="display:flex;gap:8px"><span style="flex:1">销售价</span><span style="flex:1">成本价</span></span></div>';
+    var gm = D.globalMt || { sell: 0, cost: 0 };
+    var useG = D.globalMt ? ' checked' : '';
+    var h = '<div class="mg-block"><h3>保养价格（全局）</h3>';
+    h += '<div class="mg-row" style="grid-template-columns:auto 1fr 1fr;grid-template-rows:auto">';
+    h += '<span class="mg-label" style="padding-top:8px"><input type="checkbox" id="mtGlobalUse"' + useG + '> 全局应用</span>';
+    h += '<input type="number" id="mtGlobalSell" value="' + gm.sell + '" placeholder="全局销售价">';
+    h += '<input type="number" id="mtGlobalCost" value="' + gm.cost + '" placeholder="全局成本价">';
+    h += '</div></div>';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">' +
+         '<span class="mg-label">车系</span><span style="display:flex;gap:8px"><span style="flex:1">销售价</span><span style="flex:1">成本价</span></span></div>';
     D.carOrder.forEach(function (car) {
       var m = D.maintain[car] || { sell: 0, cost: 0 };
+      var s = useG ? gm.sell : m.sell;
+      var c2 = useG ? gm.cost : m.cost;
       h += '<div class="mg-row" style="grid-template-columns:1fr 1fr;grid-template-rows:auto">';
       h += '<div style="font-weight:600">' + car + '</div>';
       h += '<div style="display:flex;gap:8px">';
-      h += '<input type="number" data-write=\'{"type":"mtSell","car":"' + car + '"}\' value="' + m.sell + '">';
-      h += '<input type="number" data-write=\'{"type":"mtCost","car":"' + car + '"}\' value="' + m.cost + '">';
+      h += '<input type="number" data-write=\'{"type":"mtSell","car":"' + car + '"}\' value="' + s + '"' + (useG ? ' readonly style="background:#f4f5f7"' : '') + '>';
+      h += '<input type="number" data-write=\'{"type":"mtCost","car":"' + car + '"}\' value="' + c2 + '"' + (useG ? ' readonly style="background:#f4f5f7"' : '') + '>';
       h += '</div></div>';
     });
     return h;
+  }
+
+  function toggleGlobalMt(checked) {
+    if (checked) {
+      var sell = 0, cost = 0;
+      D.carOrder.forEach(function (c) {
+        var m = D.maintain[c] || {};
+        if (m.sell !== undefined) sell = m.sell;
+        if (m.cost !== undefined) cost = m.cost;
+      });
+      D.globalMt = { sell: sell, cost: cost };
+      applyGlobalMt();
+    } else {
+      D.globalMt = null;
+    }
+    renderTab('mt');
+  }
+  function applyGlobalMt() {
+    if (!D.globalMt) return;
+    D.carOrder.forEach(function (c) {
+      if (D.maintain[c]) { D.maintain[c].sell = D.globalMt.sell; D.maintain[c].cost = D.globalMt.cost; }
+    });
   }
 
   /* ---------- 渲染：银行 ---------- */
@@ -293,7 +362,7 @@
     var val = inp.value;
     if (w.type === 'guide' || w.type === 'cost' || w.type === 'jpBuy' || w.type === 'mtSell' ||
         w.type === 'mtCost' || w.type === 'bankRate' || w.type === 'insBonus' || w.type === 'limit' ||
-        w.type === 'colorPremium') {
+        w.type === 'colorPremium' || w.type === 'interiorPremium') {
       val = parseFloat(val) || 0;
     }
     switch (w.type) {
@@ -323,7 +392,17 @@
         }
         break;
       }
-      case 'interior': D.interiors[w.car][w.idx] = val; break;
+      case 'interiorName': D.interiors[w.car][w.idx].name = val; break;
+      case 'interiorPremium': {
+        var iname = D.interiors[w.car][w.idx].name;
+        if (D.globalInteriors[iname] !== undefined) {
+          D.globalInteriors[iname] = val;
+          document.querySelectorAll('#tabContent input[data-int-buy="' + iname + '"]').forEach(function (inp) { inp.value = val; });
+        } else {
+          D.interiors[w.car][w.idx].premium = val;
+        }
+        break;
+      }
       case 'mtSell': D.maintain[w.car].sell = val; break;
       case 'mtCost': D.maintain[w.car].cost = val; break;
       case 'bankName': D.banks[w.idx].bank = val; break;
@@ -339,7 +418,7 @@
       case 'model': D.vehicles[w.car].push({ model: '新车型', guide: 0, cost: 0 }); break;
       case 'jp': D.jingpin[w.car].push({ name: '新精品', buy: 0 }); break;
       case 'color': D.colors[w.car].push({ name: '新颜色', premium: 0 }); break;
-      case 'interior': D.interiors[w.car].push('新内饰'); break;
+      case 'interior': D.interiors[w.car].push({ name: '新内饰', premium: 0 }); break;
       case 'bank': D.banks.push({ bank: '新银行', rate: 0 }); break;
       case 'ddOption': D.dropdowns[w.field].push('新选项'); break;
     }
@@ -414,6 +493,13 @@
     root.querySelectorAll('input[data-global-jp]').forEach(function (cb) {
       cb.addEventListener('change', function () { toggleGlobalJp(cb.dataset.jp, cb.checked); });
     });
+    root.querySelectorAll('input[data-global-interior]').forEach(function (cb) {
+      cb.addEventListener('change', function () { toggleGlobalInterior(cb.dataset.int, cb.checked); });
+    });
+    var mgUse = $('mtGlobalUse'), mgSell = $('mtGlobalSell'), mgCost = $('mtGlobalCost');
+    if (mgUse) mgUse.addEventListener('change', function () { toggleGlobalMt(mgUse.checked); });
+    if (mgSell) mgSell.addEventListener('change', function () { if (D.globalMt) { D.globalMt.sell = parseFloat(mgSell.value) || 0; applyGlobalMt(); renderTab('mt'); } });
+    if (mgCost) mgCost.addEventListener('change', function () { if (D.globalMt) { D.globalMt.cost = parseFloat(mgCost.value) || 0; applyGlobalMt(); renderTab('mt'); } });
     if ($('testConn')) $('testConn').addEventListener('click', testConnection);
     bindCarDrag();
   }
@@ -604,7 +690,7 @@
     var out = {
       vehicles: {}, carOrder: D.carOrder.slice(), jingpin: {},
       colors: {}, interiors: {}, maintain: {}, banks: D.banks.slice(), loan: {},
-      globalColors: D.globalColors, globalJps: D.globalJps, dropdowns: D.dropdowns
+      globalColors: D.globalColors, globalJps: D.globalJps, globalInteriors: D.globalInteriors, globalMt: D.globalMt, dropdowns: D.dropdowns
     };
     D.carOrder.forEach(function (c) {
       out.vehicles[c] = D.vehicles[c] || [];
