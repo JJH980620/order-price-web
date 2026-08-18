@@ -370,8 +370,9 @@
     $('sumAchieve').textContent = fmt(total);
     var overEl = $('sumOver');
     if (limit === 0) { overEl.className = 'summary-item'; $('sumOverV').textContent = '-'; }
-    else if (over > 0) { overEl.className = 'summary-item warn'; $('sumOverV').textContent = '超限 +' + fmt(over); }
-    else { overEl.className = 'summary-item ok'; $('sumOverV').textContent = '未超限'; }
+    else if (over > 0) { overEl.className = 'summary-item ok'; $('sumOverV').textContent = '超限 +' + fmt(over); }
+    else if (over < 0) { overEl.className = 'summary-item warn'; $('sumOverV').textContent = '未超限'; }
+    else { overEl.className = 'summary-item'; $('sumOverV').textContent = '持平'; }
   }
 
   /* ================= 导出/打印模板（共用美观版式，接近页面） ================= */
@@ -642,8 +643,17 @@
     $('previewModal').addEventListener('click', function (e) { if (e.target === this) showModal(false); });
   }
 
+  /* ================= 汇总吸顶高度自适应 ================= */
+  function fixSummaryTop() {
+    var tb = document.querySelector('.topbar');
+    var sc = $('summaryCard');
+    if (tb && sc) sc.style.top = (tb.offsetHeight + 6) + 'px';
+  }
+
   /* ================= 启动 ================= */
   setupAll();
   bindStatic();
   recalc();
+  fixSummaryTop();
+  window.addEventListener('resize', fixSummaryTop);
 })();
