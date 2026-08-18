@@ -94,6 +94,14 @@ for r in range(2, 12):
     if car:
         loan[car] = {"insBonus": ins, "limit": limit}
 
+# 下拉选项（原表格数据验证里的列表，可在管理模块编辑）
+dropdowns = {
+    "按揭": ["全额现款", "厂家金融", "集团金融"],
+    "客户来源": ["自然进店", "DCC", "新媒体", "老客户介绍"],
+    "车辆来源": ["嘉兴丰澜", "嘉兴方程豹", "平湖丰浩", "海宁丰浩", "桐乡丰浩",
+                "杭州丰澜", "宁波丰澜", "宁波丰洛", "余姚丰浩", "慈溪丰浩", "外部调拨"],
+}
+
 data = {
     "vehicles": vehicles,
     "carOrder": order,
@@ -104,6 +112,7 @@ data = {
     "banks": banks,
     "loan": loan,
     "globalColors": {},
+    "dropdowns": dropdowns,
 }
 
 with open(OUT, "w", encoding="utf-8") as f:
