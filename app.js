@@ -647,7 +647,10 @@
   function fixSummaryTop() {
     var tb = document.querySelector('.topbar');
     var sc = $('summaryCard');
-    if (tb && sc) sc.style.top = (tb.offsetHeight + 6) + 'px';
+    if (tb && sc) {
+      var mobile = window.matchMedia('(max-width: 640px)').matches;
+      sc.style.top = mobile ? '6px' : (tb.offsetHeight + 6) + 'px';
+    }
   }
 
   /* ================= 启动 ================= */
