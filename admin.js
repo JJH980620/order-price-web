@@ -12,6 +12,7 @@
   function initData() {
     D = clone(window.ORDER_DATA);
     D.globalColors = D.globalColors || {};
+    D.dropdowns = D.dropdowns || { '按揭': [], '客户来源': [], '车辆来源': [] };
     // 保证每个车系在所有集合都有项
     D.carOrder.forEach(function (c) {
       D.vehicles[c] = D.vehicles[c] || [];
@@ -51,7 +52,7 @@
   }
   function renderTab(tab) {
     var fn = { car: renderCar, jp: renderJp, color: renderColor, interior: renderInterior,
-               mt: renderMt, bank: renderBank, loan: renderLoan, github: renderGithub }[tab];
+               mt: renderMt, bank: renderBank, loan: renderLoan, dropdown: renderDropdown, github: renderGithub }[tab];
     $('tabContent').innerHTML = fn();
     bindEditors();
     if (tab === 'github') fillGithubForm();
@@ -216,6 +217,26 @@
     return h;
   }
 
+  /* ---------- 渲染：下拉选项 ---------- */
+  function renderDropdown() {
+    var h = '';
+    ['按揭', '客户来源', '车辆来源'].forEach(function (field) {
+      var arr = D.dropdowns[field] || [];
+      h += '<div class="mg-block"><h3>' + field + '（下拉选项）</h3>';
+      h += '<div style="display:grid;grid-template-columns:1fr 30px;gap:8px;margin-bottom:6px">' +
+           '<span class="mg-label">选项</span><span></span></div>';
+      arr.forEach(function (v, i) {
+        h += '<div class="mg-row" style="grid-template-columns:1fr 30px">';
+        h += '<input data-write=\'{"type":"ddOption","field":"' + field + '","idx":' + i + '}\' value="' + v + '">';
+        h += '<button class="del-sm" data-del=\'{"type":"ddOption","field":"' + field + '","idx":' + i + '}\'>x</button>';
+        h += '</div>';
+      });
+      h += '<button class="mg-add" data-add=\'{"type":"ddOption","field":"' + field + '"}\'>+ 添加选项</button>';
+      h += '</div>';
+    });
+    return h;
+  }
+
   /* ---------- 渲染：GitHub ---------- */
   function renderGithub() {
     return '<div class="mg-block"><h3>GitHub 仓库配置</h3>' +
@@ -274,6 +295,7 @@
       case 'bankRate': D.banks[w.idx].rate = val; break;
       case 'insBonus': D.loan[w.car].insBonus = val; break;
       case 'limit': D.loan[w.car].limit = val; break;
+      case 'ddOption': D.dropdowns[w.field][w.idx] = val; break;
     }
   }
   function addEdit(w) {
@@ -284,6 +306,7 @@
       case 'color': D.colors[w.car].push({ name: '新颜色', premium: 0 }); break;
       case 'interior': D.interiors[w.car].push('新内饰'); break;
       case 'bank': D.banks.push({ bank: '新银行', rate: 0 }); break;
+      case 'ddOption': D.dropdowns[w.field].push('新选项'); break;
     }
     renderTab(currentTab);
   }
@@ -301,6 +324,8 @@
       D.interiors[w.car].splice(w.idx, 1);
     } else if (w.type === 'bank') {
       D.banks.splice(w.idx, 1);
+    } else if (w.type === 'ddOption') {
+      D.dropdowns[w.field].splice(w.idx, 1);
     }
     renderTab(currentTab);
   }
@@ -358,7 +383,8 @@
   function buildOutput() {
     var out = {
       vehicles: {}, carOrder: D.carOrder.slice(), jingpin: {},
-      colors: {}, interiors: {}, maintain: {}, banks: D.banks.slice(), loan: {}, globalColors: D.globalColors
+      colors: {}, interiors: {}, maintain: {}, banks: D.banks.slice(), loan: {},
+      globalColors: D.globalColors, dropdowns: D.dropdowns
     };
     D.carOrder.forEach(function (c) {
       out.vehicles[c] = D.vehicles[c] || [];
