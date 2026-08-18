@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>订单价格申请 · 数据管理</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .admin-wrap { max-width: 1000px; margin: 0 auto; padding: 20px 16px 60px; }
+  .card { margin-bottom: 16px; }
+
+  /* 登录 */
+  #loginView { max-width: 380px; margin: 80px auto; text-align: center; }
+  #loginView h1 { font-size: 20px; color: var(--primary); margin-bottom: 20px; }
+  #loginView input[type=password] {
+    width: 100%; height: 42px; border: 1px solid var(--border); border-radius: 8px;
+    padding: 0 12px; font-size: 15px; margin-bottom: 12px;
+  }
+  #loginView input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(31,58,95,.12); }
+  #loginErr { color: var(--red); font-size: 13px; min-height: 18px; margin-top: 8px; }
+
+  /* 顶部 */
+  .admin-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+  .admin-top h1 { font-size: 18px; color: var(--primary); }
+
+  /* Tab */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .tab-btn {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 8px 14px; border-radius: 8px; font-size: 14px; cursor: pointer;
+  }
+  .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* 数据编辑 */
+  .mg-block { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+  .mg-block h3 { font-size: 14px; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .mg-row { display: grid; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .mg-row input, .mg-row select {
+    width: 100%; height: 34px; border: 1px solid var(--border); border-radius: 7px; padding: 0 9px; font-size: 13px;
+  }
+  .mg-row input[type=number] { text-align: right; }
+  .mg-row input:focus, .mg-row select:focus { outline: none; border-color: var(--primary); }
+  .mg-row .mg-label { font-size: 12px; color: var(--muted); }
+  .del-sm {
+    border: 1px solid var(--border); background: #fff; border-radius: 6px; cursor: pointer;
+    width: 28px; height: 28px; color: #9aa1ab; font-size: 14px;
+  }
+  .del-sm:hover { color: var(--red); border-color: var(--red); }
+  .mg-add { border: 1px dashed var(--primary); color: var(--primary); background: #fff; border-radius: 7px;
+    padding: 6px 12px; font-size: 13px; cursor: pointer; }
+  .mg-add:hover { background: #f0f4fa; }
+
+  .save-bar { position: sticky; bottom: 0; background: #fff; border-top: 1px solid var(--border);
+    padding: 12px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+  .save-bar .status { font-size: 13px; color: var(--muted); margin-right: auto; }
+  .save-bar .status.ok { color: var(--green); }
+  .save-bar .status.err { color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- 登录 -->
+<div id="loginView">
+  <h1>嘉兴方程豹 · 数据管理</h1>
+  <input type="password" id="pwdInput" placeholder="请输入管理密码">
+  <button class="btn primary" id="loginBtn" style="width:100%">进入管理</button>
+  <div id="loginErr"></div>
+</div>
+
+<!-- 管理面板 -->
+<div id="panelView" class="admin-wrap" hidden>
+  <div class="admin-top">
+    <h1>数据管理</h1>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="backBtn">返回报价</button>
+      <button class="btn" id="logoutBtn">退出</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="car">车系 / 车型</button>
+    <button class="tab-btn" data-tab="jp">精品</button>
+    <button class="tab-btn" data-tab="color">颜色 / 加价</button>
+    <button class="tab-btn" data-tab="interior">内饰</button>
+    <button class="tab-btn" data-tab="mt">保养</button>
+    <button class="tab-btn" data-tab="bank">银行</button>
+    <button class="tab-btn" data-tab="loan">限价 / 保险</button>
+    <button class="tab-btn" data-tab="github">GitHub 配置</button>
+  </div>
+
+  <div id="tabContent"></div>
+
+  <div class="save-bar">
+    <span class="status" id="saveStatus"></span>
+    <button class="btn" id="previewBtn">预览数据</button>
+    <button class="btn primary" id="saveBtn">保存到 GitHub</button>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
