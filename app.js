@@ -503,6 +503,122 @@
     showModal(false);
   }
 
+  /* ================= 导出 PDF（A4，可多页） ================= */
+  function exportPDF() {
+    if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+      alert('PDF导出组件加载失败，请检查网络后重试');
+      return;
+    }
+    buildExport();
+    var el = $('exportArea');
+    html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false }).then(function (canvas) {
+      var pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+      var pageW = 210, pageH = 297;
+      var imgW = canvas.width, imgH = canvas.height;
+      var scaleF = pageW / imgW;
+      var targetH = imgH * scaleF;
+      var imgData = canvas.toDataURL('image/jpeg', 0.95);
+      var heightLeft = targetH;
+      var position = 0;
+      pdf.addImage(imgData, 'JPEG', 0, position, pageW, targetH);
+      heightLeft -= pageH;
+      while (heightLeft > 0) {
+        position -= pageH;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, pageW, targetH);
+        heightLeft -= pageH;
+      }
+      pdf.save('订单价格申请单_' + new Date().getTime() + '.pdf');
+    }).catch(function () {
+      alert('PDF导出失败，请重试');
+    });
+  }
+
+  /* ================= 导出 Excel ================= */
+  function excelModule(aoa, sel, heads, colDefs, label) {
+    var rows = document.querySelectorAll(sel + ' .dyn-row');
+    var data = [];
+    rows.forEach(function (r) {
+      var has = false, cells = [];
+      colDefs.forEach(function (cd) {
+        var el = r.querySelector('[data-role="' + cd[0] + '"]');
+        var t;
+        if (cd[1]) {
+          t = el.textContent;
+        } else {
+          t = (el && el.value != null) ? String(el.value) : '';
+        }
+        if (!cd[1] && t !== '') has = true;
+        cells.push(cd[1] ? (t === '-' ? '-' : t) : (t || '-'));
+      });
+      if (has) data.push(cells);
+    });
+    if (!data.length) return;
+    aoa.push([label]);
+    aoa.push(heads);
+    data.forEach(function (cells) { aoa.push(cells); });
+    aoa.push([]);
+  }
+  function exportExcel() {
+    if (typeof XLSX === 'undefined') {
+      alert('Excel导出组件加载失败，请检查网络后重试');
+      return;
+    }
+    var aoa = [];
+    function row() { aoa.push(Array.prototype.slice.call(arguments)); }
+    aoa.push(['嘉兴方程豹 · 订单价格申请单']);
+    aoa.push(['日期：' + today()]);
+    aoa.push([]);
+    aoa.push(['一、订单信息']);
+    row('订单名称', $('orderName').value);
+    row('订单时间', $('orderDate').value);
+    row('客户来源', $('customerSource').value);
+    row('车系 / 车型', ($('car').value || '') + ' / ' + ($('model').value || ''));
+    row('颜色 / 内饰', ($('color').value || '') + ' / ' + ($('interior').value || ''));
+    row('按揭', $('mortgage').value);
+    row('手机号码', $('phone').value);
+    row('交车时间', $('delivery').value);
+    row('销售顾问', $('salesman').value);
+    row('车辆来源', $('vehicleSource').value);
+    aoa.push([]);
+    aoa.push(['二、价格与毛利']);
+    row('厂方指导价（含颜色加价）', $('guidePrice').textContent);
+    row('成本价', $('costPrice').textContent);
+    row('实际开票价', $('actualPrice').textContent);
+    row('单车毛利', $('unitProfit').textContent);
+    row('单车毛利率', $('unitMargin').textContent);
+    row('现金优惠', fmtIn($('cashDiscount')));
+    row('置换补贴', fmtIn($('subsidyReplace')));
+    row('保险补贴', fmtIn($('subsidyInsurance')));
+    row('电商补贴', fmtIn($('subsidyEcom')));
+    row('基地补贴', fmtIn($('subsidyBase')));
+    row('特殊折让', fmtIn($('specialDiscount')));
+    row('特殊车型折让 / 返利', fmtIn($('specialRebate')));
+    aoa.push([]);
+    aoa.push(['三、汇总']);
+    row('三级毛利', $('sumTier3').textContent);
+    row('毛利', $('sumGross').textContent);
+    row('整车毛利', $('sumTotal').textContent);
+    row('限价', $('sumLimit').textContent);
+    row('毛利达成', $('sumAchieve').textContent);
+    row('是否超限价', $('sumOverV').textContent);
+    aoa.push([]);
+    aoa.push(['四、三级毛利构成']);
+    excelModule(aoa, '#loanRows', ['银行', '返息率', '贷款金额', '返佣', '返息金额', '毛利'], [['loan-bank', 0], ['loan-rate', 0], ['loan-amount', 0], ['loan-rebate', 0], ['loan-rebateamt', 1], ['loan-profit', 1]], '贷款');
+    excelModule(aoa, '#jingpinRows', ['项目', '产值', '成本', '毛利'], [['jp-name', 0], ['jp-value', 0], ['jp-cost', 1], ['jp-profit', 1]], '精品');
+    excelModule(aoa, '#optRows', ['产值', '成本', '毛利'], [['opt-value', 0], ['opt-cost', 0], ['opt-profit', 1]], '选装');
+    excelModule(aoa, '#mtRows', ['次数', '产值', '单价成本', '毛利'], [['mt-count', 0], ['mt-value', 0], ['mt-ucost', 0], ['mt-profit', 1]], '保养');
+    excelModule(aoa, '#couponRows', ['产值', '成本', '毛利'], [['cp-value', 0], ['cp-cost', 0], ['cp-profit', 1]], '卡券');
+    excelModule(aoa, '#insRows', ['预估返佣', '毛利'], [['ins-bonus', 0], ['ins-profit', 1]], '保险');
+    excelModule(aoa, '#regRows', ['收费', '成本', '毛利'], [['reg-charge', 0], ['reg-cost', 0], ['reg-profit', 1]], '上牌');
+
+    var ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{ wch: 24 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '订单价格申请');
+    XLSX.writeFile(wb, '订单价格申请单_' + new Date().getTime() + '.xlsx');
+  }
+
   /* ================= 事件 ================= */
   function bindStatic() {
     ['car', 'model', 'color', 'interior',
@@ -518,6 +634,8 @@
     $('adminBtn').addEventListener('click', function () { location.href = 'admin.html'; });
     $('imgBtn').addEventListener('click', exportImage);
     $('printBtn').addEventListener('click', function () { buildPrint(); window.print(); });
+    $('pdfBtn').addEventListener('click', exportPDF);
+    $('excelBtn').addEventListener('click', exportExcel);
     $('previewClose').addEventListener('click', function () { showModal(false); });
     $('previewCancel').addEventListener('click', function () { showModal(false); });
     $('previewConfirm').addEventListener('click', confirmExport);
