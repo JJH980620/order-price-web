@@ -1106,5 +1106,6 @@ window.ORDER_DATA = {
    "insBonus": 800,
    "limit": 20000
   }
- }
+ },
+ "globalColors": {}
 };
