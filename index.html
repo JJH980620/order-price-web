@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>嘉兴方程豹 · 订单价格申请</title>
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -156,6 +156,19 @@
 <!-- 打印区域 -->
 <div id="printArea"></div>
 
+<!-- 数据更新提醒模态框 -->
+<div id="refreshModal" class="modal-mask">
+  <div class="modal-box">
+    <div class="modal-head">数据已更新
+      <button type="button" class="modal-close" id="refreshClose">×</button>
+    </div>
+    <div class="modal-body" style="flex-direction:column;align-items:center;gap:12px;color:#333">
+      <p style="text-align:center;line-height:1.7;font-size:14px">订单价格数据已更新到最新版本<br>请刷新页面查看最新数据</p>
+      <button class="btn primary" id="refreshNow" style="min-width:180px">立即刷新</button>
+    </div>
+  </div>
+</div>
+
 <!-- 导出图片预览模态框 -->
 <div id="previewModal" class="modal-mask">
   <div class="modal-box">
@@ -173,7 +186,7 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="data.js?v=7"></script>
-<script src="app.js?v=7"></script>
+<script src="data.js?v=8"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>
