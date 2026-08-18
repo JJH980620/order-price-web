@@ -241,21 +241,14 @@
 
   /* ---------- 渲染：GitHub ---------- */
   function renderGithub() {
-    return '<div class="mg-block"><h3>GitHub 仓库配置</h3>' +
-      '<p class="mg-label" style="margin-bottom:10px">用于把修改后的价格数据写回仓库的 data.js（需仓库访问令牌 TOKEN，仅保存在本浏览器）。</p>' +
-      '<div class="grid"><div class="field"><label>仓库所有者(owner)</label><input id="ghOwner" placeholder="你的GitHub用户名"></div>' +
-      '<div class="field"><label>仓库名(repo)</label><input id="ghRepo" placeholder="如 order-price-web"></div>' +
-      '<div class="field"><label>分支(branch)</label><input id="ghBranch" placeholder="main"></div>' +
-      '<div class="field"><label>文件路径</label><input id="ghPath" value="data.js"></div>' +
-      '<div class="field" style="grid-column:1/-1"><label>访问令牌 TOKEN（repo 权限，不写入代码）</label><input id="ghToken" type="password" placeholder="ghp_xxx"></div></div>' +
+    return '<div class="mg-block"><h3>GitHub 保存配置</h3>' +
+      '<p class="mg-label" style="margin-bottom:10px">填入访问令牌 TOKEN 即可把修改保存到网页（目标仓库已固定，TOKEN 仅保存在本浏览器）。</p>' +
+      '<div class="field"><label>目标仓库（固定）</label><input value="JJH980620/order-price-web（main · data.js）" readonly style="background:#f4f5f7;color:#555"></div>' +
+      '<div class="field" style="margin-top:10px"><label>访问令牌 TOKEN（repo 写权限，不写入代码）</label><input id="ghToken" type="password" placeholder="ghp_xxx"></div>' +
       '<button class="btn" id="testConn" style="margin-top:12px">测试连接</button></div>';
   }
   function fillGithubForm() {
     var cfg = loadCfg();
-    if ($('ghOwner')) $('ghOwner').value = cfg.owner || '';
-    if ($('ghRepo')) $('ghRepo').value = cfg.repo || '';
-    if ($('ghBranch')) $('ghBranch').value = cfg.branch || 'main';
-    if ($('ghPath')) $('ghPath').value = cfg.path || 'data.js';
     if ($('ghToken')) $('ghToken').value = cfg.token || '';
   }
   function loadCfg() {
@@ -514,10 +507,10 @@
   /* ---------- GitHub ---------- */
   function readCfg() {
     var cfg = loadCfg();
-    if ($('ghOwner')) cfg.owner = $('ghOwner').value.trim() || cfg.owner;
-    if ($('ghRepo')) cfg.repo = $('ghRepo').value.trim() || cfg.repo;
-    if ($('ghBranch')) cfg.branch = $('ghBranch').value.trim() || 'main';
-    if ($('ghPath')) cfg.path = $('ghPath').value.trim() || 'data.js';
+    cfg.owner = cfg.owner || 'JJH980620';
+    cfg.repo = cfg.repo || 'order-price-web';
+    cfg.branch = cfg.branch || 'main';
+    cfg.path = cfg.path || 'data.js';
     if ($('ghToken') && $('ghToken').value) cfg.token = $('ghToken').value.trim();
     return cfg;
   }
@@ -533,15 +526,15 @@
       else if (r.status === 404) { st.textContent = '仓库不存在，请检查 owner/repo'; st.className = 'status err'; }
       else { st.textContent = '错误 ' + r.status; st.className = 'status err'; }
     }).catch(function () {
-      st.textContent = '网络错误，无法连接 GitHub'; st.className = 'status err';
+      st.textContent = '网络错误，无法连接 GitHub（国内网络可能需代理/加速）'; st.className = 'status err';
     });
   }
   function saveToGithub() {
     var cfg = readCfg();
-    if (!cfg.owner || !cfg.repo || !cfg.token) {
+    if (!cfg.token) {
       switchTab('github');
       var st = $('saveStatus');
-      st.textContent = '请先填写 owner / repo / TOKEN，再点击「保存到 GitHub」';
+      st.textContent = '请先填写 TOKEN，再点击「保存到 GitHub」';
       st.className = 'status err';
       return;
     }
@@ -570,7 +563,7 @@
         }
       })
       .catch(function () {
-        st.textContent = '保存失败：网络错误'; st.className = 'status err';
+        st.textContent = '保存失败：网络错误（无法访问 GitHub，国内网络可能需代理/加速）'; st.className = 'status err';
       });
   }
   function previewData() {
