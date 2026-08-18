@@ -103,6 +103,7 @@ data = {
     "maintain": maintain,
     "banks": banks,
     "loan": loan,
+    "globalColors": {},
 }
 
 with open(OUT, "w", encoding="utf-8") as f:
