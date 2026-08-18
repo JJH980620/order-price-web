@@ -298,6 +298,95 @@ body {
     grid-template-columns: 1fr 1fr !important;
     padding-right: 30px;
   }
-  .dyn-row .calc-out { grid-column: 1 / -1; }
+  .dyn-row .calc-out {
+    grid-column: 1 / -1;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
   .dyn-head { display: none; }
 }
+
+/* ===== 汇总置顶冻结 ===== */
+.summary-card {
+  position: sticky;
+  top: 61px;
+  z-index: 20;
+  background: #fff;
+  padding: 14px 16px;
+}
+.summary-card .summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+.summary-card .summary-item { padding: 10px 8px; }
+.summary-card .summary-item .v { font-size: 19px; }
+
+/* ===== 动态行手机端字段名 ===== */
+.mob-label {
+  display: none;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 3px;
+  font-weight: 500;
+}
+.dyn-row .calc-out .mob-label {
+  display: block;
+  text-align: right;
+  font-weight: 500;
+}
+@media (max-width: 640px) {
+  .mob-label { display: block; }
+}
+
+/* ===== 导出图片模板 ===== */
+#exportArea {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 720px;
+  background: #ffffff;
+  padding: 28px 30px;
+  color: #1f2329;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+#exportArea .ex-title {
+  font-size: 21px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: .5px;
+}
+#exportArea .ex-sub {
+  text-align: center;
+  color: #6b7280;
+  margin: 6px 0 16px;
+  font-size: 13px;
+}
+#exportArea .ex-sec {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f3a5f;
+  margin: 18px 0 6px;
+  padding-left: 8px;
+  border-left: 3px solid #e0512f;
+}
+#exportArea .ex-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+#exportArea .ex-table td {
+  padding: 7px 12px;
+  border: 1px solid #d9dee6;
+}
+#exportArea .ex-table td.k {
+  background: #f4f5f7;
+  width: 150px;
+  font-weight: 500;
+  color: #4b5563;
+}
+#exportArea .ex-table td.v {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+#exportArea .ex-muted { color: #9aa1ab; }
