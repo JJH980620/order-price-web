@@ -508,6 +508,20 @@
       });
   }
 
+  /* ---------- 写版本标记文件（供报价页检测更新） ---------- */
+  function writeVersionFile(cfg, version) {
+    var url = 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/data.version.json';
+    var headers = { Authorization: 'token ' + cfg.token, 'Content-Type': 'application/json' };
+    return fetch(url + '?ref=' + encodeURIComponent(cfg.branch), { headers: headers })
+      .then(function (r) { return r.json(); })
+      .then(function (f) {
+        var body = { message: '更新版本标记', content: utf8ToB64(JSON.stringify({ v: version })), branch: cfg.branch };
+        if (f.sha) body.sha = f.sha;
+        return fetch(url, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
+      })
+      .catch(function () {});
+  }
+
   /* ---------- 生成输出 ---------- */
   function buildOutput() {
     var out = {
@@ -584,7 +598,7 @@
       .then(function (r) {
         if (r.ok) {
           st.textContent = '已保存 ✓ 正在部署更新...'; st.className = 'status ok';
-          pollDeploy(cfg, Date.now());
+          writeVersionFile(cfg, Date.now()).then(function () { pollDeploy(cfg, Date.now()); });
         } else {
           return r.json().then(function (j) {
             var msg = (j.message || '未知错误') + (j.errors ? ' ' + j.errors.map(function (e) { return e.message; }).join(';') : '');
