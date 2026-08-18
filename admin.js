@@ -15,7 +15,9 @@
     D.carOrder.forEach(function (c) {
       D.vehicles[c] = D.vehicles[c] || [];
       D.jingpin[c] = D.jingpin[c] || [];
-      D.colors[c] = D.colors[c] || [];
+      D.colors[c] = (D.colors[c] || []).map(function (x) {
+        return typeof x === 'string' ? { name: x, premium: 0 } : x;
+      });
       D.interiors[c] = D.interiors[c] || [];
       D.maintain[c] = D.maintain[c] || { sell: 0, cost: 0 };
       D.loan[c] = D.loan[c] || { insBonus: 0, limit: 0 };
@@ -100,33 +102,23 @@
     return h;
   }
 
-  /* ---------- 渲染：颜色/加价 ---------- */
+  /* ---------- 渲染：颜色/加价（按车系） ---------- */
   function renderColor() {
     var h = '';
     D.carOrder.forEach(function (car) {
-      h += '<div class="mg-block"><h3>' + car + '（可选颜色）</h3>';
+      h += '<div class="mg-block"><h3>' + car + '（可选颜色 / 加价）</h3>';
+      h += '<div style="display:grid;grid-template-columns:1fr .7fr 30px;gap:8px;margin-bottom:6px">' +
+           '<span class="mg-label">颜色</span><span class="mg-label">加价(元)</span><span></span></div>';
       (D.colors[car] || []).forEach(function (c, i) {
-        h += '<div class="mg-row" style="grid-template-columns:1fr 30px">';
-        h += '<input data-write=\'{"type":"color","car":"' + car + '","idx":' + i + '}\' value="' + c + '">';
+        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr 30px">';
+        h += '<input data-write=\'{"type":"color","car":"' + car + '","idx":' + i + '}\' value="' + c.name + '">';
+        h += '<input type="number" data-write=\'{"type":"colorPremium","car":"' + car + '","idx":' + i + '}\' value="' + c.premium + '">';
         h += '<button class="del-sm" data-del=\'{"type":"color","car":"' + car + '","idx":' + i + '}\'>x</button>';
         h += '</div>';
       });
       h += '<button class="mg-add" data-add=\'{"type":"color","car":"' + car + '"}\'>+ 添加颜色</button>';
       h += '</div>';
     });
-    // 颜色加价
-    h += '<div class="mg-block"><h3>颜色加价（全局）</h3>';
-    h += '<div style="display:grid;grid-template-columns:1fr .7fr 30px;gap:8px;margin-bottom:6px">' +
-         '<span class="mg-label">颜色</span><span class="mg-label">加价(元)</span><span></span></div>';
-    Object.keys(D.colorPremium).forEach(function (c) {
-      h += '<div class="mg-row" style="grid-template-columns:1fr .7fr 30px">';
-      h += '<input data-write=\'{"type":"premName","car":"' + c + '"}\' value="' + c + '">';
-      h += '<input type="number" data-write=\'{"type":"premVal","car":"' + c + '"}\' value="' + D.colorPremium[c] + '">';
-      h += '<button class="del-sm" data-del=\'{"type":"prem","car":"' + c + '"}\'>x</button>';
-      h += '</div>';
-    });
-    h += '<button class="mg-add" data-add=\'{"type":"prem"}\'>+ 添加加价颜色</button>';
-    h += '</div>';
     return h;
   }
 
@@ -223,7 +215,7 @@
     var val = inp.value;
     if (w.type === 'guide' || w.type === 'cost' || w.type === 'jpBuy' || w.type === 'mtSell' ||
         w.type === 'mtCost' || w.type === 'bankRate' || w.type === 'insBonus' || w.type === 'limit' ||
-        w.type === 'premVal') {
+        w.type === 'colorPremium') {
       val = parseFloat(val) || 0;
     }
     switch (w.type) {
@@ -233,9 +225,8 @@
       case 'cost': D.vehicles[w.car][w.idx].cost = val; break;
       case 'jpName': D.jingpin[w.car][w.idx].name = val; break;
       case 'jpBuy': D.jingpin[w.car][w.idx].buy = val; break;
-      case 'color': D.colors[w.car][w.idx] = val; break;
-      case 'premName': renamePrem(w.car, val); break;
-      case 'premVal': D.colorPremium[w.car] = val; break;
+      case 'color': D.colors[w.car][w.idx].name = val; break;
+      case 'colorPremium': D.colors[w.car][w.idx].premium = val; break;
       case 'interior': D.interiors[w.car][w.idx] = val; break;
       case 'mtSell': D.maintain[w.car].sell = val; break;
       case 'mtCost': D.maintain[w.car].cost = val; break;
@@ -250,9 +241,8 @@
       case 'car': addCar(); break;
       case 'model': D.vehicles[w.car].push({ model: '新车型', guide: 0, cost: 0 }); break;
       case 'jp': D.jingpin[w.car].push({ name: '新精品', buy: 0 }); break;
-      case 'color': D.colors[w.car].push('新颜色'); break;
+      case 'color': D.colors[w.car].push({ name: '新颜色', premium: 0 }); break;
       case 'interior': D.interiors[w.car].push('新内饰'); break;
-      case 'prem': D.colorPremium['新颜色'] = 0; break;
       case 'bank': D.banks.push({ bank: '新银行', rate: 0 }); break;
     }
     renderTab(currentTab);
@@ -261,8 +251,6 @@
     if (w.type === 'car') {
       if (!confirm('确定删除车系「' + w.car + '」及其所有数据？')) return;
       delCar(w.car);
-    } else if (w.type === 'prem') {
-      delete D.colorPremium[w.car];
     } else if (w.type === 'model') {
       D.vehicles[w.car].splice(w.idx, 1);
     } else if (w.type === 'jp') {
@@ -307,13 +295,6 @@
     delete D.maintain[name]; delete D.loan[name];
     renderTab(currentTab);
   }
-  function renamePrem(oldName, newName) {
-    if (!newName || newName === oldName) return;
-    if (D.colorPremium[newName] !== undefined) return;
-    D.colorPremium[newName] = D.colorPremium[oldName];
-    delete D.colorPremium[oldName];
-    renderTab(currentTab);
-  }
 
   /* ---------- 事件绑定 ---------- */
   function bindEditors() {
@@ -334,7 +315,7 @@
   function buildOutput() {
     var out = {
       vehicles: {}, carOrder: D.carOrder.slice(), jingpin: {},
-      colors: {}, interiors: {}, maintain: {}, banks: D.banks.slice(), loan: {}, colorPremium: D.colorPremium
+      colors: {}, interiors: {}, maintain: {}, banks: D.banks.slice(), loan: {}
     };
     D.carOrder.forEach(function (c) {
       out.vehicles[c] = D.vehicles[c] || [];

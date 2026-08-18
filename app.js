@@ -229,7 +229,7 @@
       return;
     }
     setOptions(ms, D.vehicles[car].map(function (m) { return m.model; }), '请选择车型');
-    setOptions(cs, D.colors[car] || [], '请选择颜色');
+    setOptions(cs, (D.colors[car] || []).map(function (c) { return c.name; }), '请选择颜色');
     setOptions(is_, D.interiors[car] || [], '请选择内饰');
     // 更新精品下拉、保养单价、保险返佣（所有已有行）
     document.querySelectorAll('#jingpinRows .dyn-row').forEach(function (r) {
@@ -262,7 +262,12 @@
       (D.vehicles[car] || []).forEach(function (m) { if (m.model === model) mv = m; });
       if (mv) { guide = mv.guide; cost = mv.cost; }
     }
-    if (color && D.colorPremium[color]) colorPremium = D.colorPremium[color];
+    if (car && color) {
+      var cArr = D.colors[car] || [];
+      for (var i = 0; i < cArr.length; i++) {
+        if (cArr[i].name === color) { colorPremium = cArr[i].premium; break; }
+      }
+    }
     guide = guide + colorPremium;
     $('colorHint').textContent = colorPremium > 0 ? '该颜色加价 ' + fmt(colorPremium) + ' 元' : '';
 

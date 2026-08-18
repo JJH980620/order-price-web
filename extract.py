@@ -37,7 +37,11 @@ for r in range(2, fit.max_row + 1):
         if not any(x["name"] == name for x in jingpin[car]):
             jingpin[car].append({"name": name, "buy": round(buy, 2)})
 
-# 车身颜色列映射（车系 -> Excel 列号）
+# 颜色加价（主表 B5 硬编码逻辑，作为初始迁移基准）
+colorPremium = {"霜雾灰": 3000, "青峦翠": 3000, "云夜紫": 5000, "赤沙红": 5000,
+                "星月银/悬浮顶": 10000, "破晓金/悬浮顶": 10000, "湖光绿/悬浮顶": 10000}
+
+# 车身颜色列映射（车系 -> Excel 列号），每种颜色带该车系的加价
 color_col = {"钛3": 19, "钛3闪充版": 20, "钛7": 21, "豹5": 22, "豹5智驾版": 23,
              "豹5长续航版": 24, "豹8": 25, "钛7闪充版": 26, "豹5闪充版": 29, "豹8闪充版": 31}
 colors = {car: [] for car in order}
@@ -49,7 +53,7 @@ for car, col in color_col.items():
         v = fit.cell(row=r, column=col).value
         if v and v not in seen:
             seen.add(v)
-            colors[car].append(v)
+            colors[car].append({"name": v, "premium": colorPremium.get(v, 0)})
 
 # 内饰列映射
 interior_col = {"钛3": 33, "钛3闪充版": 34, "钛7": 35, "豹5": 36, "豹5智驾版": 37,
@@ -90,10 +94,6 @@ for r in range(2, 12):
     if car:
         loan[car] = {"insBonus": ins, "limit": limit}
 
-# 颜色加价（主表 B5 硬编码逻辑）
-colorPremium = {"霜雾灰": 3000, "青峦翠": 3000, "云夜紫": 5000, "赤沙红": 5000,
-                "星月银/悬浮顶": 10000, "破晓金/悬浮顶": 10000, "湖光绿/悬浮顶": 10000}
-
 data = {
     "vehicles": vehicles,
     "carOrder": order,
@@ -103,7 +103,6 @@ data = {
     "maintain": maintain,
     "banks": banks,
     "loan": loan,
-    "colorPremium": colorPremium,
 }
 
 with open(OUT, "w", encoding="utf-8") as f:
