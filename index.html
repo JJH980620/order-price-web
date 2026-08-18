@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>嘉兴方程豹 · 订单价格申请</title>
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
@@ -14,6 +14,8 @@
     <button class="btn" id="resetBtn">重置</button>
     <button class="btn" id="adminBtn">管理</button>
     <button class="btn" id="imgBtn">导出图片</button>
+    <button class="btn" id="pdfBtn">导出PDF</button>
+    <button class="btn" id="excelBtn">导出Excel</button>
     <button class="btn primary" id="printBtn">打印</button>
   </div>
 </header>
@@ -169,7 +171,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="data.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="data.js?v=5"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
