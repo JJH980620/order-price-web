@@ -12,6 +12,7 @@
   function initData() {
     D = clone(window.ORDER_DATA);
     D.globalColors = D.globalColors || {};
+    D.globalJps = D.globalJps || {};
     D.dropdowns = D.dropdowns || { '按揭': [], '客户来源': [], '车辆来源': [] };
     // 保证每个车系在所有集合都有项
     D.carOrder.forEach(function (c) {
@@ -86,17 +87,24 @@
     return h;
   }
 
-  /* ---------- 渲染：精品 ---------- */
+  /* ---------- 渲染：精品（多车系同名精品可设全局，与颜色加价一致） ---------- */
   function renderJp() {
     var h = '';
     D.carOrder.forEach(function (car) {
       h += '<div class="mg-block"><h3>' + car + '</h3>';
-      h += '<div style="display:grid;grid-template-columns:1fr .7fr 30px;gap:8px;margin-bottom:6px">' +
-           '<span class="mg-label">精品名称</span><span class="mg-label">采购价</span><span></span></div>';
+      h += '<div style="display:grid;grid-template-columns:1fr .7fr auto 30px;gap:8px;margin-bottom:6px">' +
+           '<span class="mg-label">精品名称</span><span class="mg-label">采购价</span><span class="mg-label">全局</span><span></span></div>';
       (D.jingpin[car] || []).forEach(function (p, i) {
-        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr 30px">';
+        var multi = countJpOf(p.name) > 1;
+        var isGlobal = D.globalJps[p.name] !== undefined;
+        var disp = isGlobal ? D.globalJps[p.name] : p.buy;
+        var g = multi
+          ? '<span class="mg-label"><input type="checkbox" data-global-jp data-jp="' + p.name + '"' + (isGlobal ? ' checked' : '') + '> 全局</span>'
+          : '<span></span>';
+        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr auto 30px">';
         h += '<input data-write=\'{"type":"jpName","car":"' + car + '","idx":' + i + '}\' value="' + p.name + '">';
-        h += '<input type="number" data-write=\'{"type":"jpBuy","car":"' + car + '","idx":' + i + '}\' value="' + p.buy + '">';
+        h += '<input type="number" data-jp-buy="' + p.name + '" data-write=\'{"type":"jpBuy","car":"' + car + '","idx":' + i + '}\' value="' + disp + '">';
+        h += g;
         h += '<button class="del-sm" data-del=\'{"type":"jp","car":"' + car + '","idx":' + i + '}\'>x</button>';
         h += '</div>';
       });
@@ -104,6 +112,29 @@
       h += '</div>';
     });
     return h;
+  }
+
+  function countJpOf(name) {
+    var n = 0;
+    D.carOrder.forEach(function (c) {
+      (D.jingpin[c] || []).forEach(function (x) { if (x.name === name) n++; });
+    });
+    return n;
+  }
+  function toggleGlobalJp(name, checked) {
+    if (checked) {
+      var cur = 0;
+      D.carOrder.forEach(function (c) {
+        (D.jingpin[c] || []).forEach(function (x) { if (x.name === name) cur = x.buy; });
+      });
+      D.globalJps[name] = cur;
+      D.carOrder.forEach(function (c) {
+        (D.jingpin[c] || []).forEach(function (x) { if (x.name === name) x.buy = cur; });
+      });
+    } else {
+      delete D.globalJps[name];
+    }
+    renderTab('jp');
   }
 
   function countCarOf(color) {
@@ -271,7 +302,16 @@
       case 'guide': D.vehicles[w.car][w.idx].guide = val; break;
       case 'cost': D.vehicles[w.car][w.idx].cost = val; break;
       case 'jpName': D.jingpin[w.car][w.idx].name = val; break;
-      case 'jpBuy': D.jingpin[w.car][w.idx].buy = val; break;
+      case 'jpBuy': {
+        var pname = D.jingpin[w.car][w.idx].name;
+        if (D.globalJps[pname] !== undefined) {
+          D.globalJps[pname] = val;
+          document.querySelectorAll('#tabContent input[data-jp-buy="' + pname + '"]').forEach(function (inp) { inp.value = val; });
+        } else {
+          D.jingpin[w.car][w.idx].buy = val;
+        }
+        break;
+      }
       case 'color': D.colors[w.car][w.idx].name = val; break;
       case 'colorPremium': {
         var cname = D.colors[w.car][w.idx].name;
@@ -370,6 +410,9 @@
     });
     root.querySelectorAll('input[data-global]').forEach(function (cb) {
       cb.addEventListener('change', function () { toggleGlobal(cb.dataset.color, cb.checked); });
+    });
+    root.querySelectorAll('input[data-global-jp]').forEach(function (cb) {
+      cb.addEventListener('change', function () { toggleGlobalJp(cb.dataset.jp, cb.checked); });
     });
     if ($('testConn')) $('testConn').addEventListener('click', testConnection);
     bindCarDrag();
@@ -561,7 +604,7 @@
     var out = {
       vehicles: {}, carOrder: D.carOrder.slice(), jingpin: {},
       colors: {}, interiors: {}, maintain: {}, banks: D.banks.slice(), loan: {},
-      globalColors: D.globalColors, dropdowns: D.dropdowns
+      globalColors: D.globalColors, globalJps: D.globalJps, dropdowns: D.dropdowns
     };
     D.carOrder.forEach(function (c) {
       out.vehicles[c] = D.vehicles[c] || [];
