@@ -292,7 +292,17 @@
     var subsidyBase = num($('subsidyBase')), specialDiscount = num($('specialDiscount'));
     var specialRebate = num($('specialRebate'));
 
-    var actualPrice = guide - (cashDiscount + subsidyReplace + subsidyInsurance + subsidyEcom + subsidyBase + specialDiscount);
+    var calc = D.calc || {};
+    function hasItem(list, key) { return list && list.indexOf(key) >= 0; }
+    var pd = calc.priceDeduct || ['cash', 'replace', 'insurance', 'ecom', 'base', 'specialDisc'];
+    var deduct = 0;
+    if (hasItem(pd, 'cash')) deduct += cashDiscount;
+    if (hasItem(pd, 'replace')) deduct += subsidyReplace;
+    if (hasItem(pd, 'insurance')) deduct += subsidyInsurance;
+    if (hasItem(pd, 'ecom')) deduct += subsidyEcom;
+    if (hasItem(pd, 'base')) deduct += subsidyBase;
+    if (hasItem(pd, 'specialDisc')) deduct += specialDiscount;
+    var actualPrice = guide - deduct;
 
     var loanProfit = 0;
     document.querySelectorAll('#loanRows .dyn-row').forEach(function (r) {
@@ -354,8 +364,25 @@
     });
 
     var tier3 = loanProfit + jpProfit + optProfit + mtProfit + couponProfit + insProfit + regProfit;
-    var gross = actualPrice - cost + (subsidyReplace + subsidyInsurance + subsidyEcom + subsidyBase + specialDiscount + specialRebate);
-    var unitProfit = actualPrice - cost + (tier3 + subsidyReplace + subsidyInsurance + subsidyEcom + subsidyBase + specialDiscount + specialRebate);
+    var ga = calc.grossAdd || ['replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate'];
+    var grossAddSum = 0;
+    if (hasItem(ga, 'replace')) grossAddSum += subsidyReplace;
+    if (hasItem(ga, 'insurance')) grossAddSum += subsidyInsurance;
+    if (hasItem(ga, 'ecom')) grossAddSum += subsidyEcom;
+    if (hasItem(ga, 'base')) grossAddSum += subsidyBase;
+    if (hasItem(ga, 'specialDisc')) grossAddSum += specialDiscount;
+    if (hasItem(ga, 'specialRebate')) grossAddSum += specialRebate;
+    var gross = actualPrice - cost + grossAddSum;
+    var up = calc.unitProfitAdd || ['tier3', 'replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate'];
+    var upAddSum = 0;
+    if (hasItem(up, 'tier3')) upAddSum += tier3;
+    if (hasItem(up, 'replace')) upAddSum += subsidyReplace;
+    if (hasItem(up, 'insurance')) upAddSum += subsidyInsurance;
+    if (hasItem(up, 'ecom')) upAddSum += subsidyEcom;
+    if (hasItem(up, 'base')) upAddSum += subsidyBase;
+    if (hasItem(up, 'specialDisc')) upAddSum += specialDiscount;
+    if (hasItem(up, 'specialRebate')) upAddSum += specialRebate;
+    var unitProfit = actualPrice - cost + upAddSum;
     var unitMargin = actualPrice !== 0 ? (unitProfit / actualPrice) : 0;
     var total = gross + tier3;
     var limit = (car && D.loan[car]) ? D.loan[car].limit : 0;
