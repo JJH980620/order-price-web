@@ -96,8 +96,8 @@
     var h = '';
     D.carOrder.forEach(function (car) {
       h += '<div class="mg-block"><h3>' + car + '</h3>';
-      h += '<div style="display:grid;grid-template-columns:1fr .7fr auto 30px;gap:8px;margin-bottom:6px">' +
-           '<span class="mg-label">精品名称</span><span class="mg-label">采购价</span><span class="mg-label">全局</span><span></span></div>';
+      h += '<div style="display:grid;grid-template-columns:1fr .7fr 80px 30px;gap:8px;margin-bottom:6px">' +
+           '<span class="mg-label">精品名称</span><span class="mg-label">采购价</span><span class="mg-label">全局</span><span class="mg-label">删除</span></div>';
       (D.jingpin[car] || []).forEach(function (p, i) {
         var multi = countJpOf(p.name) > 1;
         var isGlobal = D.globalJps[p.name] !== undefined;
@@ -105,7 +105,7 @@
         var g = multi
           ? '<span class="mg-label"><input type="checkbox" data-global-jp data-jp="' + p.name + '"' + (isGlobal ? ' checked' : '') + '> 全局</span>'
           : '<span></span>';
-        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr auto 30px">';
+        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr 80px 30px">';
         h += '<input data-write=\'{"type":"jpName","car":"' + car + '","idx":' + i + '}\' value="' + p.name + '">';
         h += '<input type="number" data-jp-buy="' + p.name + '" data-write=\'{"type":"jpBuy","car":"' + car + '","idx":' + i + '}\' value="' + disp + '">';
         h += g;
@@ -128,9 +128,14 @@
   function toggleGlobalJp(name, checked) {
     if (checked) {
       var cur = 0;
-      D.carOrder.forEach(function (c) {
-        (D.jingpin[c] || []).forEach(function (x) { if (x.name === name) cur = x.buy; });
-      });
+      var inp = document.querySelector('#tabContent input[data-jp-buy="' + name + '"]');
+      if (inp && inp.value !== '' && !isNaN(parseFloat(inp.value))) {
+        cur = parseFloat(inp.value) || 0;
+      } else {
+        D.carOrder.forEach(function (c) {
+          (D.jingpin[c] || []).forEach(function (x) { if (x.name === name && x.buy) cur = x.buy; });
+        });
+      }
       D.globalJps[name] = cur;
       D.carOrder.forEach(function (c) {
         (D.jingpin[c] || []).forEach(function (x) { if (x.name === name) x.buy = cur; });
@@ -151,9 +156,14 @@
   function toggleGlobal(color, checked) {
     if (checked) {
       var cur = 0;
-      D.carOrder.forEach(function (c) {
-        (D.colors[c] || []).forEach(function (x) { if (x.name === color) cur = x.premium; });
-      });
+      var inp = document.querySelector('#tabContent input[data-premium-color="' + color + '"]');
+      if (inp && inp.value !== '' && !isNaN(parseFloat(inp.value))) {
+        cur = parseFloat(inp.value) || 0;
+      } else {
+        D.carOrder.forEach(function (c) {
+          (D.colors[c] || []).forEach(function (x) { if (x.name === color && x.premium) cur = x.premium; });
+        });
+      }
       D.globalColors[color] = cur;
       D.carOrder.forEach(function (c) {
         (D.colors[c] || []).forEach(function (x) { if (x.name === color) x.premium = cur; });
@@ -169,8 +179,8 @@
     var h = '';
     D.carOrder.forEach(function (car) {
       h += '<div class="mg-block"><h3>' + car + '（可选颜色 / 加价）</h3>';
-      h += '<div style="display:grid;grid-template-columns:1fr .7fr auto 30px;gap:8px;margin-bottom:6px">' +
-           '<span class="mg-label">颜色</span><span class="mg-label">加价(元)</span><span class="mg-label">全局</span><span></span></div>';
+      h += '<div style="display:grid;grid-template-columns:1fr .7fr 80px 30px;gap:8px;margin-bottom:6px">' +
+           '<span class="mg-label">颜色</span><span class="mg-label">加价(元)</span><span class="mg-label">全局</span><span class="mg-label">删除</span></div>';
       (D.colors[car] || []).forEach(function (c, i) {
         var multi = countCarOf(c.name) > 1;
         var isGlobal = D.globalColors[c.name] !== undefined;
@@ -178,7 +188,7 @@
         var g = multi
           ? '<span class="mg-label"><input type="checkbox" data-global data-color="' + c.name + '"' + (isGlobal ? ' checked' : '') + '> 全局</span>'
           : '<span></span>';
-        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr auto 30px">';
+        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr 80px 30px">';
         h += '<input data-write=\'{"type":"color","car":"' + car + '","idx":' + i + '}\' value="' + c.name + '">';
         h += '<input type="number" data-premium-color="' + c.name + '" data-write=\'{"type":"colorPremium","car":"' + car + '","idx":' + i + '}\' value="' + disp + '">';
         h += g;
@@ -196,8 +206,8 @@
     var h = '';
     D.carOrder.forEach(function (car) {
       h += '<div class="mg-block"><h3>' + car + '</h3>';
-      h += '<div style="display:grid;grid-template-columns:1fr .7fr auto 30px;gap:8px;margin-bottom:6px">' +
-           '<span class="mg-label">内饰名称</span><span class="mg-label">加价(元)</span><span class="mg-label">全局</span><span></span></div>';
+      h += '<div style="display:grid;grid-template-columns:1fr .7fr 80px 30px;gap:8px;margin-bottom:6px">' +
+           '<span class="mg-label">内饰名称</span><span class="mg-label">加价(元)</span><span class="mg-label">全局</span><span class="mg-label">删除</span></div>';
       (D.interiors[car] || []).forEach(function (c, i) {
         var multi = countIntOf(c.name) > 1;
         var isGlobal = D.globalInteriors[c.name] !== undefined;
@@ -205,7 +215,7 @@
         var g = multi
           ? '<span class="mg-label"><input type="checkbox" data-global-interior data-int="' + c.name + '"' + (isGlobal ? ' checked' : '') + '> 全局</span>'
           : '<span></span>';
-        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr auto 30px">';
+        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr 80px 30px">';
         h += '<input data-write=\'{"type":"interiorName","car":"' + car + '","idx":' + i + '}\' value="' + c.name + '">';
         h += '<input type="number" data-int-buy="' + c.name + '" data-write=\'{"type":"interiorPremium","car":"' + car + '","idx":' + i + '}\' value="' + disp + '">';
         h += g;
@@ -228,9 +238,14 @@
   function toggleGlobalInterior(name, checked) {
     if (checked) {
       var cur = 0;
-      D.carOrder.forEach(function (c) {
-        (D.interiors[c] || []).forEach(function (x) { if (x.name === name) cur = x.premium; });
-      });
+      var inp = document.querySelector('#tabContent input[data-int-buy="' + name + '"]');
+      if (inp && inp.value !== '' && !isNaN(parseFloat(inp.value))) {
+        cur = parseFloat(inp.value) || 0;
+      } else {
+        D.carOrder.forEach(function (c) {
+          (D.interiors[c] || []).forEach(function (x) { if (x.name === name && x.premium) cur = x.premium; });
+        });
+      }
       D.globalInteriors[name] = cur;
       D.carOrder.forEach(function (c) {
         (D.interiors[c] || []).forEach(function (x) { if (x.name === name) x.premium = cur; });
