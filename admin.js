@@ -546,6 +546,15 @@
     root.querySelectorAll('select[data-calc-select]').forEach(function (sel) {
       sel.addEventListener('change', function () { D.calc[sel.dataset.key] = sel.value; });
     });
+    var presetSel = document.querySelector('#tabContent select[data-calc-preset]');
+    if (presetSel) presetSel.addEventListener('change', function () { if (presetSel.value) applyPreset(presetSel.value); });
+    function markCustom() {
+      var ps = document.querySelector('#tabContent select[data-calc-preset]');
+      if (ps) ps.value = '';
+    }
+    root.querySelectorAll('input[data-calc], input[data-calc-tier3], input[data-calc-bool], select[data-calc-select]').forEach(function (el) {
+      el.addEventListener('change', markCustom);
+    });
     if ($('testConn')) $('testConn').addEventListener('click', testConnection);
     bindCarDrag();
   }
@@ -731,7 +740,62 @@
       });
   }
 
-  /* ---------- 渲染：计算配置（覆盖首页全部计算逻辑） ---------- */
+  /* ---------- 计算配置：预设 + 全部计算逻辑 ---------- */
+  var CALC_PRESETS = {
+    standard: {
+      priceDeduct: ['cash', 'replace', 'insurance', 'ecom', 'base', 'specialDisc'],
+      grossAdd: ['replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate'],
+      unitProfitAdd: ['tier3', 'replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate'],
+      tier3Modules: ['loan', 'jp', 'opt', 'mt', 'coupon', 'ins', 'reg'],
+      totalUseTier3: true, marginDenom: 'actual', overBase: 'total', precision: '2', guideIncludeColor: true
+    },
+    noTier3: {
+      priceDeduct: ['cash', 'replace', 'insurance', 'ecom', 'base', 'specialDisc'],
+      grossAdd: ['replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate'],
+      unitProfitAdd: ['replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate'],
+      tier3Modules: ['loan', 'jp', 'opt', 'mt', 'coupon', 'ins', 'reg'],
+      totalUseTier3: false, marginDenom: 'actual', overBase: 'total', precision: '2', guideIncludeColor: true
+    },
+    unitBased: {
+      priceDeduct: ['cash', 'replace', 'insurance', 'ecom', 'base', 'specialDisc'],
+      grossAdd: ['replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate'],
+      unitProfitAdd: ['tier3', 'replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate'],
+      tier3Modules: ['loan', 'jp', 'opt', 'mt', 'coupon', 'ins', 'reg'],
+      totalUseTier3: true, marginDenom: 'actual', overBase: 'unit', precision: '2', guideIncludeColor: true
+    }
+  };
+  function currentPresetName() {
+    var cur = JSON.stringify(D.calc);
+    var hit = '';
+    Object.keys(CALC_PRESETS).forEach(function (n) {
+      if (JSON.stringify(CALC_PRESETS[n]) === cur) hit = n;
+    });
+    return hit;
+  }
+  function applyPreset(name) {
+    var p = CALC_PRESETS[name];
+    if (!p) return;
+    D.calc = JSON.parse(JSON.stringify(p));
+    renderTab('calc');
+  }
+  function calcExplain() {
+    var c = D.calc;
+    var L = { cash: '现金优惠', replace: '置换补贴', insurance: '保险补贴', ecom: '电商补贴', base: '基地补贴', specialDisc: '特殊折让', specialRebate: '特殊车型折让', tier3: '三级毛利' };
+    var M = { loan: '贷款', jp: '精品', opt: '选装', mt: '保养', coupon: '卡券', ins: '保险', reg: '上牌' };
+    function j(a) { return (a || []).map(function (k) { return L[k] || k; }).join(' + ') || '（无）'; }
+    var lines = [];
+    lines.push('三级毛利合计 = ' + (c.tier3Modules || []).map(function (k) { return M[k] || k; }).join(' + ') || '三级毛利合计 = （无）');
+    lines.push('实际开票价 = 指导价 −（' + j(c.priceDeduct) + '）');
+    lines.push('毛利 = 开票价 − 成本 +（' + j(c.grossAdd) + '）');
+    lines.push('单车毛利 = 开票价 − 成本 +（' + j(c.unitProfitAdd) + '）');
+    lines.push('整车毛利 = 毛利' + (c.totalUseTier3 !== false ? ' + 三级毛利' : '（不含三级毛利）'));
+    lines.push('单车毛利率 = 单车毛利 ÷ ' + (c.marginDenom === 'guide' ? '指导价' : '实际开票价'));
+    lines.push('毛利达成 / 超限价 基准 = ' + (c.overBase === 'unit' ? '单车毛利' : '整车毛利'));
+    lines.push('金额显示 = ' + (c.precision === 'int' ? '取整（四舍五入）' : '保留 2 位小数'));
+    lines.push('指导价 = 基础价' + (c.guideIncludeColor !== false ? ' + 颜色加价' : '（不含颜色加价）'));
+    return lines;
+  }
+
   function renderCalc() {
     var labels = { cash: '现金优惠', replace: '置换补贴', insurance: '保险补贴', ecom: '电商补贴', base: '基地补贴', specialDisc: '特殊折让', specialRebate: '特殊车型折让', tier3: '三级毛利' };
     var modLabels = { loan: '贷款', jp: '精品', opt: '选装', mt: '保养', coupon: '卡券', ins: '保险', reg: '上牌' };
@@ -745,8 +809,14 @@
       h += '</div></div>';
       return h;
     }
-    var h = '<p class="mg-label" style="margin-bottom:10px;color:#666">自定义首页各指标的计算构成，保存后全局生效。</p>';
-    // 三级毛利模块开关
+    var pname = currentPresetName();
+    var h = '<div class="mg-block"><h3>预设方案（一键切换）</h3><p class="mg-label" style="margin-bottom:8px;color:#666">先选一个预设，再按需微调；手动改动后会自动变为「自定义」。</p>' +
+            '<select data-calc-preset style="height:34px;border:1px solid var(--border);border-radius:7px;padding:0 8px;max-width:280px">';
+    var presetNames = { standard: '标准（默认）', noTier3: '不含三级毛利', unitBased: '以单车毛利为准' };
+    ['standard', 'noTier3', 'unitBased', ''].forEach(function (n) {
+      h += '<option value="' + n + '"' + ((pname || '') === n ? ' selected' : '') + '>' + (n ? (presetNames[n] || n) : '自定义') + '</option>';
+    });
+    h += '</select></div>';
     var tm = D.calc.tier3Modules = D.calc.tier3Modules || [];
     var tier3Html = '<div class="mg-block"><h3>三级毛利构成（勾选计入「三级毛利」合计的模块）</h3><div style="display:flex;flex-wrap:wrap;gap:12px 20px;padding:4px 0">';
     ['loan', 'jp', 'opt', 'mt', 'coupon', 'ins', 'reg'].forEach(function (k) {
@@ -758,7 +828,6 @@
     h += group('实际开票价 = 指导价 −（勾选计入扣减）', 'priceDeduct', ['cash', 'replace', 'insurance', 'ecom', 'base', 'specialDisc']);
     h += group('毛利 = 开票价 − 成本 +（勾选计入）', 'grossAdd', ['replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate']);
     h += group('单车毛利 = 开票价 − 成本 +（勾选计入）', 'unitProfitAdd', ['tier3', 'replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate']);
-    // 整车毛利 / 毛利率 / 达成 / 超限
     h += '<div class="mg-block"><h3>整车毛利 / 毛利率 / 达成 / 超限</h3>';
     h += '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin:4px 0 12px">' +
          '<input type="checkbox" data-calc-bool data-key="totalUseTier3"' + (D.calc.totalUseTier3 ? ' checked' : '') + '> 整车毛利 = 毛利 + 三级毛利（计入三级毛利）</label>';
@@ -770,6 +839,14 @@
          '<option value="total"' + (D.calc.overBase !== 'unit' ? ' selected' : '') + '>整车毛利</option>' +
          '<option value="unit"' + (D.calc.overBase === 'unit' ? ' selected' : '') + '>单车毛利</option></select></label>';
     h += '</div></div>';
+    h += '<div class="mg-block"><h3>其他选项</h3>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">';
+    h += '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" data-calc-bool data-key="guideIncludeColor"' + (D.calc.guideIncludeColor !== false ? ' checked' : '') + '> 指导价 = 基础价 + 颜色加价</label>';
+    h += '<label class="mg-label" style="display:flex;align-items:center;gap:6px">金额显示<select data-calc-select data-key="precision" style="height:34px;border:1px solid var(--border);border-radius:7px;padding:0 8px">' +
+         '<option value="2"' + (D.calc.precision !== 'int' ? ' selected' : '') + '>保留 2 位小数</option>' +
+         '<option value="int"' + (D.calc.precision === 'int' ? ' selected' : '') + '>取整（四舍五入）</option></select></label>';
+    h += '</div></div>';
+    h += '<div class="mg-block"><h3>当前计算逻辑预览</h3><pre style="font-size:13px;line-height:1.8;white-space:pre-wrap;color:#333;margin:0">' + calcExplain().join(String.fromCharCode(10)) + '</pre></div>';
     return h;
   }
 
