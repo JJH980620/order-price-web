@@ -355,7 +355,7 @@
 
     var tier3 = loanProfit + jpProfit + optProfit + mtProfit + couponProfit + insProfit + regProfit;
     var gross = actualPrice - cost + (subsidyReplace + subsidyInsurance + subsidyEcom + subsidyBase + specialDiscount + specialRebate);
-    var unitProfit = actualPrice - cost + (tier3 + subsidyReplace + subsidyInsurance + subsidyEcom + subsidyBase + specialDiscount);
+    var unitProfit = actualPrice - cost + (tier3 + subsidyReplace + subsidyInsurance + subsidyEcom + subsidyBase + specialDiscount + specialRebate);
     var unitMargin = actualPrice !== 0 ? (unitProfit / actualPrice) : 0;
     var total = gross + tier3;
     var limit = (car && D.loan[car]) ? D.loan[car].limit : 0;
