@@ -363,7 +363,16 @@
       regProfit += p;
     });
 
-    var tier3 = loanProfit + jpProfit + optProfit + mtProfit + couponProfit + insProfit + regProfit;
+    var tm = calc.tier3Modules;
+    function inMod(k) { return !tm || tm.indexOf(k) >= 0; }
+    var tier3 = 0;
+    if (inMod('loan')) tier3 += loanProfit;
+    if (inMod('jp')) tier3 += jpProfit;
+    if (inMod('opt')) tier3 += optProfit;
+    if (inMod('mt')) tier3 += mtProfit;
+    if (inMod('coupon')) tier3 += couponProfit;
+    if (inMod('ins')) tier3 += insProfit;
+    if (inMod('reg')) tier3 += regProfit;
     var ga = calc.grossAdd || ['replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate'];
     var grossAddSum = 0;
     if (hasItem(ga, 'replace')) grossAddSum += subsidyReplace;
@@ -383,22 +392,24 @@
     if (hasItem(up, 'specialDisc')) upAddSum += specialDiscount;
     if (hasItem(up, 'specialRebate')) upAddSum += specialRebate;
     var unitProfit = actualPrice - cost + upAddSum;
-    var unitMargin = actualPrice !== 0 ? (unitProfit / actualPrice) : 0;
-    var total = gross + tier3;
+    var marginBase = (calc.marginDenom === 'guide') ? guide : actualPrice;
+    var unitMargin = marginBase !== 0 ? (unitProfit / marginBase) : 0;
+    var total = gross + (calc.totalUseTier3 !== false ? tier3 : 0);
     var limit = (car && D.loan[car]) ? D.loan[car].limit : 0;
-    var over = total - limit;
+    var achieveBase = (calc.overBase === 'unit') ? unitProfit : total;
+    var over = achieveBase - limit;
 
     $('guidePrice').textContent = guide ? fmt(guide) : '-';
     $('costPrice').textContent = cost ? fmt(cost) : '-';
     $('actualPrice').textContent = fmt(actualPrice);
     $('unitProfit').textContent = fmt(unitProfit);
-    $('unitMargin').textContent = actualPrice ? (unitMargin * 100).toFixed(2) + '%' : '-';
+    $('unitMargin').textContent = marginBase ? (unitMargin * 100).toFixed(2) + '%' : '-';
 
     $('sumTier3').textContent = fmt(tier3);
     $('sumGross').textContent = fmt(gross);
     $('sumTotal').textContent = fmt(total);
     $('sumLimit').textContent = limit ? fmt(limit) : '-';
-    $('sumAchieve').textContent = fmt(total);
+    $('sumAchieve').textContent = fmt(achieveBase);
     var overEl = $('sumOver');
     if (limit === 0) { overEl.className = 'summary-item'; $('sumOverV').textContent = '-'; }
     else if (over > 0) { overEl.className = 'summary-item ok'; $('sumOverV').textContent = '超限 +' + fmt(over); }
