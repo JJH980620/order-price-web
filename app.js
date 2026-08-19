@@ -8,7 +8,8 @@
     if (typeof n === 'string') n = n.replace(/,/g, '');
     var x = Number(n);
     if (n === null || n === undefined || isNaN(x)) return '-';
-    return x.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    var prec = (D && D.calc && D.calc.precision === 'int') ? 0 : 2;
+    return x.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: prec });
   };
   var fmtIn = function (el) {
     var v = el && el.value;
@@ -284,7 +285,7 @@
         }
       }
     }
-    guide = guide + colorPremium;
+    if (!(D.calc && D.calc.guideIncludeColor === false)) guide = guide + colorPremium;
     $('colorHint').textContent = colorPremium > 0 ? '该颜色加价 ' + fmt(colorPremium) + ' 元' : '';
 
     var cashDiscount = num($('cashDiscount')), subsidyReplace = num($('subsidyReplace'));
