@@ -1084,7 +1084,7 @@ window.ORDER_DATA = {
   },
   {
    "bank": "厂家金融",
-   "rate": 0.065
+   "rate": 0
   },
   {
    "bank": "中信银行",
