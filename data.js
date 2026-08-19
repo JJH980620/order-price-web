@@ -77,38 +77,6 @@ window.ORDER_DATA = {
     "cost": 375800
    }
   ],
-  "钛3": [
-   {
-    "model": "501KM后驱Pro版",
-    "guide": 133800,
-    "cost": 127200
-   },
-   {
-    "model": "501KM后驱Max版",
-    "guide": 139800,
-    "cost": 130800
-   },
-   {
-    "model": "501KM后驱Ultra版",
-    "guide": 149800,
-    "cost": 138200
-   },
-   {
-    "model": "501KM四驱Max版",
-    "guide": 153800,
-    "cost": 138000
-   },
-   {
-    "model": "501KM四驱Ultra版",
-    "guide": 163800,
-    "cost": 147400
-   },
-   {
-    "model": "501KM四驱无人机版",
-    "guide": 177800,
-    "cost": 168500
-   }
-  ],
   "钛7": [
    {
     "model": "135KM两驱Pro版",
@@ -129,6 +97,16 @@ window.ORDER_DATA = {
     "model": "190KM四驱Ultra版",
     "guide": 219800,
     "cost": 209100
+   },
+   {
+    "model": "315KM两驱Max版",
+    "guide": 195800,
+    "cost": 187200
+   },
+   {
+    "model": "300KM四驱Ultra版",
+    "guide": 225800,
+    "cost": 214800
    }
   ],
   "钛3闪充版": [
@@ -236,7 +214,6 @@ window.ORDER_DATA = {
   "豹5",
   "豹5智驾版",
   "豹8",
-  "钛3",
   "钛7",
   "钛3闪充版",
   "钛7闪充版",
@@ -365,44 +342,6 @@ window.ORDER_DATA = {
    {
     "name": "后驱电机下护板Ⅱ_豹8",
     "buy": 324
-   },
-   {
-    "name": "美容-隐形车衣6.5",
-    "buy": 2680
-   },
-   {
-    "name": "美容-隐形车衣7.5",
-    "buy": 3080
-   }
-  ],
-  "钛3": [
-   {
-    "name": "前电机下护板_钛3四驱",
-    "buy": 236
-   },
-   {
-    "name": "电池包下护板_ 钛 3 四驱",
-    "buy": 754
-   },
-   {
-    "name": "后电机下护板_钛3（两驱、四驱通用）",
-    "buy": 254
-   },
-   {
-    "name": "前电机护板（两驱）",
-    "buy": 236
-   },
-   {
-    "name": "电池包下护板_ 钛 3 两驱",
-    "buy": 590
-   },
-   {
-    "name": "双层脚垫_钛3",
-    "buy": 260.8
-   },
-   {
-    "name": "后备箱垫_钛3",
-    "buy": 91.4
    },
    {
     "name": "美容-隐形车衣6.5",
@@ -729,32 +668,6 @@ window.ORDER_DATA = {
     "premium": 0
    }
   ],
-  "钛3": [
-   {
-    "name": "微光粉",
-    "premium": 0
-   },
-   {
-    "name": "冰晶蓝",
-    "premium": 0
-   },
-   {
-    "name": "星月银",
-    "premium": 0
-   },
-   {
-    "name": "矿石绿",
-    "premium": 0
-   },
-   {
-    "name": "曜石黑",
-    "premium": 0
-   },
-   {
-    "name": "元素白",
-    "premium": 0
-   }
-  ],
   "钛7": [
    {
     "name": "山水绿",
@@ -967,16 +880,6 @@ window.ORDER_DATA = {
     "premium": 0
    }
   ],
-  "钛3": [
-   {
-    "name": "深空黑",
-    "premium": 0
-   },
-   {
-    "name": "星云灰",
-    "premium": 0
-   }
-  ],
   "钛7": [
    {
     "name": "雪隐灰",
@@ -998,6 +901,10 @@ window.ORDER_DATA = {
    },
    {
     "name": "星云灰",
+    "premium": 0
+   },
+   {
+    "name": "灰蓝双拼",
     "premium": 0
    }
   ],
@@ -1070,10 +977,6 @@ window.ORDER_DATA = {
   "豹8": {
    "sell": 746,
    "cost": 183.1
-  },
-  "钛3": {
-   "sell": 432,
-   "cost": 80
   },
   "钛7": {
    "sell": 663,
@@ -1152,6 +1055,10 @@ window.ORDER_DATA = {
   {
    "bank": "厂家金融",
    "rate": 0.065
+  },
+  {
+   "bank": "中信银行",
+   "rate": 0.005
   }
  ],
  "loan": {
@@ -1166,10 +1073,6 @@ window.ORDER_DATA = {
   "豹8": {
    "insBonus": 700,
    "limit": 10000
-  },
-  "钛3": {
-   "insBonus": 400,
-   "limit": 3000
   },
   "钛7": {
    "insBonus": 500,
