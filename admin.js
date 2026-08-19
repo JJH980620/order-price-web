@@ -16,6 +16,11 @@
     D.globalInteriors = D.globalInteriors || {};
     D.globalMt = D.globalMt || null;
     D.dropdowns = D.dropdowns || { '按揭': [], '客户来源': [], '车辆来源': [] };
+    D.calc = D.calc || {
+      priceDeduct: ['cash', 'replace', 'insurance', 'ecom', 'base', 'specialDisc'],
+      grossAdd: ['replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate'],
+      unitProfitAdd: ['tier3', 'replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate']
+    };
     // 保证每个车系在所有集合都有项
     D.carOrder.forEach(function (c) {
       D.vehicles[c] = D.vehicles[c] || [];
@@ -57,7 +62,7 @@
   }
   function renderTab(tab) {
     var fn = { car: renderCar, jp: renderJp, color: renderColor, interior: renderInterior,
-               mt: renderMt, bank: renderBank, loan: renderLoan, dropdown: renderDropdown, github: renderGithub }[tab];
+               mt: renderMt, bank: renderBank, loan: renderLoan, dropdown: renderDropdown, calc: renderCalc, github: renderGithub }[tab];
     $('tabContent').innerHTML = fn();
     bindEditors();
     if (tab === 'github') fillGithubForm();
@@ -515,6 +520,14 @@
     if (mgUse) mgUse.addEventListener('change', function () { toggleGlobalMt(mgUse.checked); });
     if (mgSell) mgSell.addEventListener('change', function () { if (D.globalMt) { D.globalMt.sell = parseFloat(mgSell.value) || 0; applyGlobalMt(); renderTab('mt'); } });
     if (mgCost) mgCost.addEventListener('change', function () { if (D.globalMt) { D.globalMt.cost = parseFloat(mgCost.value) || 0; applyGlobalMt(); renderTab('mt'); } });
+    root.querySelectorAll('input[data-calc]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var arr = D.calc[cb.dataset.group] = D.calc[cb.dataset.group] || [];
+        var idx = arr.indexOf(cb.dataset.key);
+        if (cb.checked && idx < 0) arr.push(cb.dataset.key);
+        if (!cb.checked && idx >= 0) arr.splice(idx, 1);
+      });
+    });
     if ($('testConn')) $('testConn').addEventListener('click', testConnection);
     bindCarDrag();
   }
@@ -700,12 +713,33 @@
       });
   }
 
+  /* ---------- 渲染：计算配置 ---------- */
+  function renderCalc() {
+    var labels = { cash: '现金优惠', replace: '置换补贴', insurance: '保险补贴', ecom: '电商补贴', base: '基地补贴', specialDisc: '特殊折让', specialRebate: '特殊车型折让', tier3: '三级毛利' };
+    function group(title, list, keys) {
+      var arr = D.calc[list] = D.calc[list] || [];
+      var h = '<div class="mg-block"><h3>' + title + '</h3><div style="display:flex;flex-wrap:wrap;gap:12px 20px;padding:4px 0">';
+      keys.forEach(function (k) {
+        h += '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">' +
+             '<input type="checkbox" data-calc data-group="' + list + '" data-key="' + k + '"' + (arr.indexOf(k) >= 0 ? ' checked' : '') + '> ' + labels[k] + '</label>';
+      });
+      h += '</div></div>';
+      return h;
+    }
+    var h = '<p class="mg-label" style="margin-bottom:10px;color:#666">自定义各指标的计算构成：勾选「计入」的项即可调整计算逻辑，保存后全局生效。</p>';
+    h += group('实际开票价 = 指导价 −（勾选计入扣减）', 'priceDeduct', ['cash', 'replace', 'insurance', 'ecom', 'base', 'specialDisc']);
+    h += group('毛利 = 开票价 − 成本 +（勾选计入）', 'grossAdd', ['replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate']);
+    h += group('单车毛利 = 开票价 − 成本 +（勾选计入）', 'unitProfitAdd', ['tier3', 'replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate']);
+    return h;
+  }
+
   /* ---------- 生成输出 ---------- */
   function buildOutput() {
     var out = {
       vehicles: {}, carOrder: D.carOrder.slice(), jingpin: {},
       colors: {}, interiors: {}, maintain: {}, banks: D.banks.slice(), loan: {},
-      globalColors: D.globalColors, globalJps: D.globalJps, globalInteriors: D.globalInteriors, globalMt: D.globalMt, dropdowns: D.dropdowns
+      globalColors: D.globalColors, globalJps: D.globalJps, globalInteriors: D.globalInteriors, globalMt: D.globalMt, dropdowns: D.dropdowns,
+      calc: D.calc
     };
     D.carOrder.forEach(function (c) {
       out.vehicles[c] = D.vehicles[c] || [];
