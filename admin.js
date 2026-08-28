@@ -316,11 +316,11 @@
   /* ---------- 渲染：银行 ---------- */
   function renderBank() {
     var h = '<div style="display:grid;grid-template-columns:1fr .7fr 30px;gap:8px;margin-bottom:6px">' +
-            '<span class="mg-label">银行</span><span class="mg-label">返息率</span><span></span></div>';
+            '<span class="mg-label">银行</span><span class="mg-label">返息率(%)</span><span></span></div>';
     D.banks.forEach(function (b, i) {
       h += '<div class="mg-row" style="grid-template-columns:1fr .7fr 30px">';
       h += '<input data-write=\'{"type":"bankName","idx":' + i + '}\' value="' + b.bank + '">';
-      h += '<input type="number" step="0.0005" data-write=\'{"type":"bankRate","idx":' + i + '}\' value="' + b.rate + '">';
+      h += '<input type="number" step="0.1" data-write=\'{"type":"bankRate","idx":' + i + '}\' value="' + (Math.round(b.rate * 10000) / 100) + '">';
       h += '<button class="del-sm" data-del=\'{"type":"bank","idx":' + i + '}\'>x</button>';
       h += '</div>';
     });
@@ -430,7 +430,7 @@
       case 'mtSell': D.maintain[w.car].sell = val; break;
       case 'mtCost': D.maintain[w.car].cost = val; break;
       case 'bankName': D.banks[w.idx].bank = val; break;
-      case 'bankRate': D.banks[w.idx].rate = val; break;
+      case 'bankRate': D.banks[w.idx].rate = val / 100; break;
       case 'insBonus': D.loan[w.car].insBonus = val; break;
       case 'limit': D.loan[w.car].limit = val; break;
       case 'ddOption': D.dropdowns[w.field][w.idx] = val; break;
