@@ -320,7 +320,7 @@
     D.banks.forEach(function (b, i) {
       h += '<div class="mg-row" style="grid-template-columns:1fr .7fr 30px">';
       h += '<input data-write=\'{"type":"bankName","idx":' + i + '}\' value="' + b.bank + '">';
-      h += '<input type="number" step="0.1" data-write=\'{"type":"bankRate","idx":' + i + '}\' value="' + (Math.round(b.rate * 10000) / 100) + '">';
+      h += '<div style="display:flex;align-items:center;gap:4px;width:100%"><input type="number" step="0.1" style="flex:1;min-width:0" data-write=\'{"type":"bankRate","idx":' + i + '}\' value="' + (Math.round(b.rate * 10000) / 100) + '"><span>%</span></div>';
       h += '<button class="del-sm" data-del=\'{"type":"bank","idx":' + i + '}\'>x</button>';
       h += '</div>';
     });
