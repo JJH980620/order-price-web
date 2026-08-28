@@ -59,7 +59,7 @@
   /* ================= 创建动态行 ================= */
   var pctText = function (rate) {
     var v = Math.round(rate * 10000) / 100;
-    return String(v) + '%';
+    return v.toFixed(1) + '%';
   };
   function createLoanRow() {
     var row = document.createElement('div');
@@ -457,7 +457,7 @@
         } else {
           t = (el && el.value != null) ? String(el.value) : '';
         }
-        if (c.role === 'loan-rate' && !c.calc && t !== '') t = t + '%';
+        if (c.role === 'loan-rate' && !c.calc && t !== '') t = Number(t).toFixed(1) + '%';
         if (!c.calc && t !== '') has = true;
         cells.push(c.calc ? (t === '-' ? '-' : t) : (t || '-'));
       });
@@ -608,7 +608,7 @@
         } else {
           t = (el && el.value != null) ? String(el.value) : '';
         }
-        if (cd[0] === 'loan-rate' && !cd[1] && t !== '') t = t + '%';
+        if (cd[0] === 'loan-rate' && !cd[1] && t !== '') t = Number(t).toFixed(1) + '%';
         if (!cd[1] && t !== '') has = true;
         cells.push(cd[1] ? (t === '-' ? '-' : t) : (t || '-'));
       });
