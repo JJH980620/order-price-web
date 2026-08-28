@@ -57,6 +57,10 @@
   };
 
   /* ================= 创建动态行 ================= */
+  var pctText = function (rate) {
+    var v = Math.round(rate * 10000) / 100;
+    return String(v) + '%';
+  };
   function createLoanRow() {
     var row = document.createElement('div');
     row.className = 'dyn-row';
@@ -65,9 +69,20 @@
     setOptions(bank.el, D.banks.map(function (b) { return b.bank; }), '请选择');
     D.banks.forEach(function (b) {
       var o = bank.el.querySelector('option[value="' + b.bank + '"]');
-      if (o) o.textContent = b.bank + '（' + (b.rate * 100).toFixed(3) + '%）';
+      if (o) o.textContent = b.bank + '（' + pctText(b.rate) + '）';
     });
     var rate = mkField('field', null, '返息率'), amt = mkField('field', null, '贷款金额'), reb = mkField('field', null, '返佣');
+    (function () {
+      var rw = document.createElement('div');
+      rw.style.cssText = 'display:flex;align-items:center;gap:4px;width:100%';
+      rate.el.style.cssText = 'flex:1;min-width:0';
+      rate.box.insertBefore(rw, rate.el);
+      rw.appendChild(rate.el);
+      var pc = document.createElement('span');
+      pc.textContent = '%';
+      pc.style.cssText = 'color:#6b7280;font-size:13px';
+      rw.appendChild(pc);
+    })();
     var ra = makeCalc('返息金额'), pf = makeCalc('毛利');
     row.appendChild(bank.box); row.appendChild(rate.box); row.appendChild(amt.box);
     row.appendChild(reb.box); row.appendChild(ra); row.appendChild(pf);
