@@ -80,7 +80,7 @@
     bank.el.addEventListener('change', function () {
       var o = bank.el.selectedOptions[0];
       var b = D.banks.find(function (x) { return x.bank === o.value; });
-      rate.el.value = b ? b.rate : 0;
+      rate.el.value = b ? (Math.round(b.rate * 10000) / 100) : 0;
       recalc();
     });
     [rate.el, amt.el, reb.el].forEach(function (e) { e.addEventListener('input', recalc); });
@@ -308,7 +308,7 @@
     var loanProfit = 0;
     document.querySelectorAll('#loanRows .dyn-row').forEach(function (r) {
       var amt = num(r.querySelector('[data-role="loan-amount"]'));
-      var rate = num(r.querySelector('[data-role="loan-rate"]'));
+      var rate = num(r.querySelector('[data-role="loan-rate"]')) / 100;
       var reb = num(r.querySelector('[data-role="loan-rebate"]'));
       var ra = amt * rate;
       var p = ra - reb;
@@ -442,6 +442,7 @@
         } else {
           t = (el && el.value != null) ? String(el.value) : '';
         }
+        if (c.role === 'loan-rate' && !c.calc && t !== '') t = t + '%';
         if (!c.calc && t !== '') has = true;
         cells.push(c.calc ? (t === '-' ? '-' : t) : (t || '-'));
       });
@@ -592,6 +593,7 @@
         } else {
           t = (el && el.value != null) ? String(el.value) : '';
         }
+        if (cd[0] === 'loan-rate' && !cd[1] && t !== '') t = t + '%';
         if (!cd[1] && t !== '') has = true;
         cells.push(cd[1] ? (t === '-' ? '-' : t) : (t || '-'));
       });
