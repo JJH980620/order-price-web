@@ -12,6 +12,7 @@
   function initData() {
     D = clone(window.ORDER_DATA);
     D.globalColors = D.globalColors || {};
+    D.globalColorCosts = D.globalColorCosts || {};
     D.globalJps = D.globalJps || {};
     D.globalInteriors = D.globalInteriors || {};
     D.globalMt = D.globalMt || null;
@@ -164,7 +165,7 @@
   }
   function toggleGlobal(color, checked) {
     if (checked) {
-      var cur = 0;
+      var cur = 0, curCost = 0;
       var inp = document.querySelector('#tabContent input[data-premium-color="' + color + '"]');
       if (inp && inp.value !== '' && !isNaN(parseFloat(inp.value))) {
         cur = parseFloat(inp.value) || 0;
@@ -173,12 +174,22 @@
           (D.colors[c] || []).forEach(function (x) { if (x.name === color && x.premium) cur = x.premium; });
         });
       }
+      var inpCost = document.querySelector('#tabContent input[data-cost-color="' + color + '"]');
+      if (inpCost && inpCost.value !== '' && !isNaN(parseFloat(inpCost.value))) {
+        curCost = parseFloat(inpCost.value) || 0;
+      } else {
+        D.carOrder.forEach(function (c) {
+          (D.colors[c] || []).forEach(function (x) { if (x.name === color && x.cost) curCost = x.cost; });
+        });
+      }
       D.globalColors[color] = cur;
+      D.globalColorCosts[color] = curCost;
       D.carOrder.forEach(function (c) {
-        (D.colors[c] || []).forEach(function (x) { if (x.name === color) x.premium = cur; });
+        (D.colors[c] || []).forEach(function (x) { if (x.name === color) { x.premium = cur; x.cost = curCost; } });
       });
     } else {
       delete D.globalColors[color];
+      delete D.globalColorCosts[color];
     }
     renderTab('color');
   }
@@ -188,18 +199,22 @@
     var h = '';
     D.carOrder.forEach(function (car) {
       h += '<div class="mg-block"><h3>' + car + '（可选颜色 / 加价）</h3>';
-      h += '<div style="display:grid;grid-template-columns:1fr .7fr 80px 30px;gap:8px;margin-bottom:6px">' +
-           '<span class="mg-label">颜色</span><span class="mg-label">加价(元)</span><span class="mg-label">全局</span><span class="mg-label">删除</span></div>';
+      h += '<div style="display:grid;grid-template-columns:1fr .7fr .7fr .8fr 80px 30px;gap:8px;margin-bottom:6px">' +
+           '<span class="mg-label">颜色</span><span class="mg-label">加价(元)</span><span class="mg-label">成本(元)</span><span class="mg-label">毛利</span><span class="mg-label">全局</span><span class="mg-label">删除</span></div>';
       (D.colors[car] || []).forEach(function (c, i) {
         var multi = countCarOf(c.name) > 1;
         var isGlobal = D.globalColors[c.name] !== undefined;
         var disp = isGlobal ? D.globalColors[c.name] : c.premium;
+        var dispCost = isGlobal ? (D.globalColorCosts[c.name] !== undefined ? D.globalColorCosts[c.name] : (c.cost || 0)) : (c.cost || 0);
+        var profit = disp - dispCost;
         var g = multi
           ? '<span class="mg-label"><input type="checkbox" data-global data-color="' + c.name + '"' + (isGlobal ? ' checked' : '') + '> 全局</span>'
           : '<span></span>';
-        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr 80px 30px">';
+        h += '<div class="mg-row" style="grid-template-columns:1fr .7fr .7fr .8fr 80px 30px">';
         h += '<input data-write=\'{"type":"color","car":"' + car + '","idx":' + i + '}\' value="' + c.name + '">';
         h += '<input type="number" data-premium-color="' + c.name + '" data-write=\'{"type":"colorPremium","car":"' + car + '","idx":' + i + '}\' value="' + disp + '">';
+        h += '<input type="number" data-cost-color="' + c.name + '" data-write=\'{"type":"colorCost","car":"' + car + '","idx":' + i + '}\' value="' + dispCost + '">';
+        h += '<span class="mg-label" data-profit-color="' + c.name + '" style="text-align:right;padding-top:7px">' + profit + '</span>';
         h += g;
         h += '<button class="del-sm" data-del=\'{"type":"color","car":"' + car + '","idx":' + i + '}\'>x</button>';
         h += '</div>';
@@ -386,7 +401,7 @@
     var val = inp.value;
     if (w.type === 'guide' || w.type === 'cost' || w.type === 'jpBuy' || w.type === 'mtSell' ||
         w.type === 'mtCost' || w.type === 'bankRate' || w.type === 'insBonus' || w.type === 'limit' ||
-        w.type === 'colorPremium' || w.type === 'interiorPremium') {
+        w.type === 'colorPremium' || w.type === 'colorCost' || w.type === 'interiorPremium') {
       val = parseFloat(val) || 0;
     }
     switch (w.type) {
@@ -416,6 +431,16 @@
         }
         break;
       }
+      case 'colorCost': {
+        var cname2 = D.colors[w.car][w.idx].name;
+        if (D.globalColorCosts[cname2] !== undefined) {
+          D.globalColorCosts[cname2] = val;
+          document.querySelectorAll('#tabContent input[data-cost-color="' + cname2 + '"]').forEach(function (inp) { inp.value = val; });
+        } else {
+          D.colors[w.car][w.idx].cost = val;
+        }
+        break;
+      }
       case 'interiorName': D.interiors[w.car][w.idx].name = val; break;
       case 'interiorPremium': {
         var iname = D.interiors[w.car][w.idx].name;
@@ -441,7 +466,7 @@
       case 'car': addCar(); break;
       case 'model': D.vehicles[w.car].push({ model: '新车型', guide: 0, cost: 0 }); break;
       case 'jp': D.jingpin[w.car].push({ name: '新精品', buy: 0 }); break;
-      case 'color': D.colors[w.car].push({ name: '新颜色', premium: 0 }); break;
+      case 'color': D.colors[w.car].push({ name: '新颜色', premium: 0, cost: 0 }); break;
       case 'interior': D.interiors[w.car].push({ name: '新内饰', premium: 0 }); break;
       case 'bank': D.banks.push({ bank: '新银行', rate: 0 }); break;
       case 'ddOption': D.dropdowns[w.field].push('新选项'); break;
@@ -510,6 +535,17 @@
     });
     root.querySelectorAll('[data-del]').forEach(function (b) {
       b.addEventListener('click', function () { delEdit(JSON.parse(b.dataset.del)); });
+    });
+    function refreshColorProfit() {
+      document.querySelectorAll('#tabContent input[data-premium-color]').forEach(function (inp) {
+        var nm = inp.dataset.premiumColor;
+        var costInp = document.querySelector('#tabContent input[data-cost-color="' + nm + '"]');
+        var profitEl = document.querySelector('#tabContent span[data-profit-color="' + nm + '"]');
+        if (costInp && profitEl) profitEl.textContent = ((parseFloat(inp.value) || 0) - (parseFloat(costInp.value) || 0));
+      });
+    }
+    root.querySelectorAll('#tabContent input[data-premium-color], #tabContent input[data-cost-color]').forEach(function (el) {
+      el.addEventListener('change', refreshColorProfit);
     });
     root.querySelectorAll('input[data-global]').forEach(function (cb) {
       cb.addEventListener('change', function () { toggleGlobal(cb.dataset.color, cb.checked); });
@@ -855,7 +891,7 @@
     var out = {
       vehicles: {}, carOrder: D.carOrder.slice(), jingpin: {},
       colors: {}, interiors: {}, maintain: {}, banks: D.banks.slice(), loan: {},
-      globalColors: D.globalColors, globalJps: D.globalJps, globalInteriors: D.globalInteriors, globalMt: D.globalMt, dropdowns: D.dropdowns,
+      globalColors: D.globalColors, globalColorCosts: D.globalColorCosts, globalJps: D.globalJps, globalInteriors: D.globalInteriors, globalMt: D.globalMt, dropdowns: D.dropdowns,
       calc: D.calc
     };
     D.carOrder.forEach(function (c) {

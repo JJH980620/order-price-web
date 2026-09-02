@@ -284,24 +284,27 @@
   /* ================= 核心计算 ================= */
   function recalc() {
     var car = $('car').value, model = $('model').value, color = $('color').value;
-    var guide = 0, cost = 0, colorPremium = 0;
+    var guide = 0, cost = 0, colorPremium = 0, colorCost = 0;
     if (car && model) {
       var mv = null;
       (D.vehicles[car] || []).forEach(function (m) { if (m.model === model) mv = m; });
       if (mv) { guide = mv.guide; cost = mv.cost; }
     }
     if (car && color) {
+      var cc = 0;
       if (D.globalColors && D.globalColors[color] !== undefined) {
         colorPremium = D.globalColors[color];
+        if (D.globalColorCosts && D.globalColorCosts[color] !== undefined) cc = D.globalColorCosts[color];
       } else {
         var cArr = D.colors[car] || [];
         for (var i = 0; i < cArr.length; i++) {
-          if (cArr[i].name === color) { colorPremium = cArr[i].premium; break; }
+          if (cArr[i].name === color) { colorPremium = cArr[i].premium; cc = cArr[i].cost || 0; break; }
         }
       }
+      colorCost = cc;
     }
     if (!(D.calc && D.calc.guideIncludeColor === false)) guide = guide + colorPremium;
-    $('colorHint').textContent = colorPremium > 0 ? '该颜色加价 ' + fmt(colorPremium) + ' 元' : '';
+    $('colorHint').textContent = colorPremium > 0 ? ('该颜色加价 ' + fmt(colorPremium) + ' 元，毛利 ' + fmt(colorPremium - colorCost) + ' 元') : '';
 
     var cashDiscount = num($('cashDiscount')), subsidyReplace = num($('subsidyReplace'));
     var subsidyInsurance = num($('subsidyInsurance')), subsidyEcom = num($('subsidyEcom'));
@@ -397,7 +400,7 @@
     if (hasItem(ga, 'base')) grossAddSum += subsidyBase;
     if (hasItem(ga, 'specialDisc')) grossAddSum += specialDiscount;
     if (hasItem(ga, 'specialRebate')) grossAddSum += specialRebate;
-    var gross = actualPrice - cost + grossAddSum;
+    var gross = actualPrice - cost - colorCost + grossAddSum;
     var up = calc.unitProfitAdd || ['tier3', 'replace', 'insurance', 'ecom', 'base', 'specialDisc', 'specialRebate'];
     var upAddSum = 0;
     if (hasItem(up, 'tier3')) upAddSum += tier3;
@@ -407,7 +410,7 @@
     if (hasItem(up, 'base')) upAddSum += subsidyBase;
     if (hasItem(up, 'specialDisc')) upAddSum += specialDiscount;
     if (hasItem(up, 'specialRebate')) upAddSum += specialRebate;
-    var unitProfit = actualPrice - cost + upAddSum;
+    var unitProfit = actualPrice - cost - colorCost + upAddSum;
     var marginBase = (calc.marginDenom === 'guide') ? guide : actualPrice;
     var unitMargin = marginBase !== 0 ? (unitProfit / marginBase) : 0;
     var total = gross + (calc.totalUseTier3 !== false ? tier3 : 0);
