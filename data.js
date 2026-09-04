@@ -1106,15 +1106,15 @@ window.ORDER_DATA = {
   },
   "钛7": {
    "insBonus": 500,
-   "limit": 8000
+   "limit": 3000
   },
   "钛3闪充版": {
    "insBonus": 400,
-   "limit": 8000
+   "limit": 6000
   },
   "钛7闪充版": {
    "insBonus": 500,
-   "limit": 8000
+   "limit": 9500
   },
   "豹5长续航版": {
    "insBonus": 700,
@@ -1130,6 +1130,7 @@ window.ORDER_DATA = {
   }
  },
  "globalColors": {},
+ "globalColorCosts": {},
  "globalJps": {},
  "globalInteriors": {},
  "globalMt": null,
@@ -1158,5 +1159,44 @@ window.ORDER_DATA = {
    "慈溪丰浩",
    "外部调拨"
   ]
+ },
+ "calc": {
+  "priceDeduct": [
+   "cash",
+   "replace",
+   "insurance",
+   "ecom",
+   "base",
+   "specialDisc"
+  ],
+  "grossAdd": [
+   "replace",
+   "insurance",
+   "ecom",
+   "base",
+   "specialDisc",
+   "specialRebate"
+  ],
+  "unitProfitAdd": [
+   "tier3",
+   "replace",
+   "insurance",
+   "ecom",
+   "base",
+   "specialDisc",
+   "specialRebate"
+  ],
+  "tier3Modules": [
+   "loan",
+   "jp",
+   "opt",
+   "mt",
+   "coupon",
+   "ins",
+   "reg"
+  ],
+  "totalUseTier3": true,
+  "marginDenom": "actual",
+  "overBase": "total"
  }
 };
