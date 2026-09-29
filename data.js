@@ -254,6 +254,11 @@ window.ORDER_DATA = {
     "model": "750KM云辇A/M四驱版",
     "guide": 229900,
     "cost": 218655
+   },
+   {
+    "model": "新车型",
+    "guide": 0,
+    "cost": 0
    }
   ],
   "方程S GT": [
@@ -917,8 +922,70 @@ window.ORDER_DATA = {
     "premium": 10000
    }
   ],
-  "方程S": [],
-  "方程S GT": []
+  "方程S": [
+   {
+    "name": "时尚绿",
+    "premium": 0,
+    "cost": 0
+   },
+   {
+    "name": "科技银",
+    "premium": 0,
+    "cost": 0
+   },
+   {
+    "name": "摩登红",
+    "premium": 0,
+    "cost": 0
+   },
+   {
+    "name": "动感黄",
+    "premium": 0,
+    "cost": 0
+   },
+   {
+    "name": "硬核黑",
+    "premium": 0,
+    "cost": 0
+   },
+   {
+    "name": "潮流粉",
+    "premium": 0,
+    "cost": 0
+   }
+  ],
+  "方程S GT": [
+   {
+    "name": "时尚绿",
+    "premium": 0,
+    "cost": 0
+   },
+   {
+    "name": "科技银",
+    "premium": 0,
+    "cost": 0
+   },
+   {
+    "name": "摩登红",
+    "premium": 0,
+    "cost": 0
+   },
+   {
+    "name": "动感黄",
+    "premium": 0,
+    "cost": 0
+   },
+   {
+    "name": "硬核黑",
+    "premium": 0,
+    "cost": 0
+   },
+   {
+    "name": "潮流粉",
+    "premium": 0,
+    "cost": 0
+   }
+  ]
  },
  "interiors": {
   "豹5": [
@@ -1047,8 +1114,34 @@ window.ORDER_DATA = {
     "premium": 0
    }
   ],
-  "方程S": [],
-  "方程S GT": []
+  "方程S": [
+   {
+    "name": "白黑双拼",
+    "premium": 0
+   },
+   {
+    "name": "绿灰双拼",
+    "premium": 0
+   },
+   {
+    "name": "紫黑双拼",
+    "premium": 0
+   }
+  ],
+  "方程S GT": [
+   {
+    "name": "白黑双拼",
+    "premium": 0
+   },
+   {
+    "name": "绿灰双拼",
+    "premium": 0
+   },
+   {
+    "name": "紫黑双拼",
+    "premium": 0
+   }
+  ]
  },
  "maintain": {
   "豹5": {
