@@ -238,6 +238,35 @@ window.ORDER_DATA = {
     "guide": 419800,
     "cost": 388810
    }
+  ],
+  "方程S": [
+   {
+    "model": "730KM云辇C后驱版",
+    "guide": 189900,
+    "cost": 180855
+   },
+   {
+    "model": "900KM云辇A/M后驱版",
+    "guide": 209900,
+    "cost": 199755
+   },
+   {
+    "model": "750KM云辇A/M四驱版",
+    "guide": 229900,
+    "cost": 218655
+   }
+  ],
+  "方程S GT": [
+   {
+    "model": "850KM云辇A/M后驱版",
+    "guide": 219900,
+    "cost": 209205
+   },
+   {
+    "model": "730KM云辇A/M四驱版",
+    "guide": 239900,
+    "cost": 228105
+   }
   ]
  },
  "carOrder": [
@@ -249,7 +278,9 @@ window.ORDER_DATA = {
   "钛7闪充版",
   "豹5长续航版",
   "豹5闪充版",
-  "豹8闪充版"
+  "豹8闪充版",
+  "方程S",
+  "方程S GT"
  ],
  "jingpin": {
   "豹5": [
@@ -633,6 +664,26 @@ window.ORDER_DATA = {
     "name": "美容-隐形车衣7.5",
     "buy": 3080
    }
+  ],
+  "方程S": [
+   {
+    "name": "双层脚垫_S",
+    "buy": 311.2
+   },
+   {
+    "name": "后备箱垫_S",
+    "buy": 89
+   }
+  ],
+  "方程S GT": [
+   {
+    "name": "双层脚垫_S GT",
+    "buy": 311.2
+   },
+   {
+    "name": "后备箱垫_S GT",
+    "buy": 89
+   }
   ]
  },
  "colors": {
@@ -865,7 +916,9 @@ window.ORDER_DATA = {
     "name": "湖光绿/悬浮顶",
     "premium": 10000
    }
-  ]
+  ],
+  "方程S": [],
+  "方程S GT": []
  },
  "interiors": {
   "豹5": [
@@ -993,7 +1046,9 @@ window.ORDER_DATA = {
     "name": "暗夜黑",
     "premium": 0
    }
-  ]
+  ],
+  "方程S": [],
+  "方程S GT": []
  },
  "maintain": {
   "豹5": {
@@ -1031,6 +1086,14 @@ window.ORDER_DATA = {
   "豹8闪充版": {
    "sell": 746,
    "cost": 183.1
+  },
+  "方程S": {
+   "sell": 0,
+   "cost": 0
+  },
+  "方程S GT": {
+   "sell": 0,
+   "cost": 0
   }
  },
  "banks": [
@@ -1127,6 +1190,14 @@ window.ORDER_DATA = {
   "豹8闪充版": {
    "insBonus": 800,
    "limit": 20000
+  },
+  "方程S": {
+   "insBonus": 500,
+   "limit": 0
+  },
+  "方程S GT": {
+   "insBonus": 500,
+   "limit": 0
   }
  },
  "globalColors": {},
